@@ -1,0 +1,61 @@
+{
+  "routes": [
+    {
+      "route": "/admin",
+      "redirect": "/admin/",
+      "statusCode": 301
+    },
+    {
+      "route": "/admin/*",
+      "allowedRoles": [
+        "kommune"
+      ]
+    },
+    {
+      "route": "/api/manage/*",
+      "allowedRoles": [
+        "kommune"
+      ]
+    },
+    {
+      "route": "/.auth/login/github",
+      "statusCode": 404
+    },
+    {
+      "route": "/.auth/login/twitter",
+      "statusCode": 404
+    }
+  ],
+  "responseOverrides": {
+    "401": {
+      "redirect": "/.auth/login/aad?post_login_redirect_uri=/admin/",
+      "statusCode": 302
+    },
+    "403": {
+      "rewrite": "/ingen-tilgang.html",
+      "statusCode": 403
+    }
+  },
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/admin/*",
+      "/api/*",
+      "/.auth/*",
+      "/icons/*",
+      "/shared/*",
+      "*.{png,jpg,js,json,webmanifest,css,html,md}"
+    ]
+  },
+  "mimeTypes": {
+    ".webmanifest": "application/manifest+json"
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(self), geolocation=(self)"
+  },
+  "platform": {
+    "apiRuntime": "node:20"
+  }
+}

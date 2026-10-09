@@ -14,32 +14,26 @@
 <meta name="apple-mobile-web-app-title" content="MeldInn">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="shared/meldinn-core.js"></script>
+<script src="shared/icons.js"></script>
+<script src="shared/store.js"></script>
 <style>
 :root{
-  /* Hovedfarger */
-  --petrol:#0F626B;   /* toppfelt, knapper, overskrifter */
-  --orange:#F97821;   /* hovedknapp, markeringer */
-  --offwhite:#F5F4EF; /* bakgrunn */
-  --marine:#18364A;   /* tekst, sekundær */
-  --white:#FFFFFF;
-  /* Avledede toner (lyse varianter av hovedfargene) */
-  --petrol-light:#E3EFF0; --petrol-line:#BCD8DB;
-  --orange-light:#FEF0E5; --orange-line:#FBC9A3;
-  --marine-muted:#5A6B78; --line:#DEDCD3;
-  /* Statusfarger */
-  --ok:#0F626B; --err:#C2410C; --radius:16px;
+  --petrol:#0F626B; --orange:#F97821; --offwhite:#F5F4EF; --marine:#18364A; --white:#FFFFFF;
+  --petrol-light:#E3EFF0; --petrol-line:#BCD8DB; --orange-light:#FEF0E5; --orange-line:#FBC9A3;
+  --marine-muted:#5A6B78; --line:#DEDCD3; --err:#C2410C; --radius:16px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--offwhite);color:var(--marine);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:17px}
 button{font:inherit;cursor:pointer}
 svg.i{width:1em;height:1em;vertical-align:-0.15em;flex-shrink:0}
-#app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;background:var(--offwhite)}
+#app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
 header{background:var(--petrol);color:var(--white);padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;
   display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:1000}
 header img{width:34px;height:34px;border-radius:9px}
 header h1{font-size:20px;margin:0;flex:1;letter-spacing:.3px}
-header select{background:var(--marine);color:var(--white);border:1px solid #ffffff40;border-radius:10px;padding:6px 8px;font-size:14px}
+header .muni{font-size:13px;opacity:.85}
 .back{background:none;border:none;color:var(--white);font-size:26px;padding:0 6px 0 0;line-height:1;display:flex}
 main{flex:1;padding:16px 16px calc(90px + env(safe-area-inset-bottom))}
 nav.tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--white);
@@ -51,16 +45,14 @@ nav.tabs svg{width:24px;height:24px}
 .big-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;border:none;border-radius:20px;
   background:var(--orange);color:var(--white);font-size:22px;font-weight:800;padding:26px 16px;box-shadow:0 4px 14px #F9782155}
 .big-btn svg.i{font-size:30px}
+.big-btn:disabled{opacity:.6}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:14px;
   background:var(--petrol);color:var(--white);font-size:17px;font-weight:600;padding:15px 18px;width:100%;text-decoration:none}
 .btn svg.i{font-size:20px}
 .btn.secondary{background:var(--white);color:var(--petrol);border:2px solid var(--petrol)}
-.btn.brown{background:var(--orange)}
-.btn.ok{background:var(--petrol)}
+.btn.orange{background:var(--orange)}
 .btn.small{width:auto;padding:9px 14px;font-size:15px;border-radius:11px}
-.btn:disabled{opacity:.45}
-.row{display:flex;gap:10px}
-.row>*{flex:1}
+.row{display:flex;gap:10px}.row>*{flex:1}
 h2{font-size:22px;margin:4px 0 12px;color:var(--petrol);display:flex;align-items:center;gap:8px}
 h3{font-size:17px;margin:0 0 8px;color:var(--petrol)}
 p.lead{color:var(--marine-muted);margin:0 0 16px}
@@ -69,59 +61,50 @@ p.lead{color:var(--marine-muted);margin:0 0 16px}
   font-size:17px;color:var(--marine);box-shadow:0 1px 3px #18364A14}
 .tile .ic{font-size:36px;display:flex;justify-content:center;margin-bottom:8px;color:var(--petrol)}
 .tile.sel{border-color:var(--orange);background:var(--orange-light)}
-.tile.sel .ic{color:var(--orange)}
 .steps{display:flex;gap:6px;margin-bottom:16px}
 .steps span{flex:1;height:6px;border-radius:3px;background:var(--line)}
 .steps span.on{background:var(--orange)}
-#map,#pickmap,#adminmap{height:300px;border-radius:var(--radius);overflow:hidden;margin-bottom:12px;z-index:1}
+#pickmap{height:300px;border-radius:var(--radius);overflow:hidden;margin-bottom:12px;z-index:1}
 #bigmap{height:calc(100vh - 230px);min-height:340px;border-radius:var(--radius);overflow:hidden}
-.photo-prev{width:100%;max-height:280px;object-fit:cover;border-radius:var(--radius);margin-bottom:12px;display:block}
+.photo-prev{width:100%;max-height:280px;object-fit:cover;border-radius:var(--radius);margin-bottom:12px;display:block;background:var(--petrol-light)}
 .photo-drop{border:3px dashed var(--orange-line);border-radius:var(--radius);padding:40px 16px;text-align:center;color:var(--orange);
   background:var(--orange-light);font-weight:700;margin-bottom:12px;display:block}
 .photo-drop .ic{font-size:52px;display:flex;justify-content:center;margin-bottom:6px}
-textarea,input[type=text],input[type=email],input[type=number],select.f{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;background:var(--white);color:var(--marine)}
-textarea:focus,input:focus,select.f:focus{outline:2px solid var(--petrol);border-color:var(--petrol)}
+textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;background:var(--white);color:var(--marine)}
+textarea:focus,input:focus{outline:2px solid var(--petrol);border-color:var(--petrol)}
 textarea{min-height:90px;resize:vertical}
 label.l{display:block;font-weight:600;margin:12px 0 6px;font-size:15px}
 .list-item{display:flex;gap:12px;align-items:center;background:var(--white);border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px #18364A14;width:100%;border:none;text-align:left;color:inherit}
 .list-item .thumb{width:58px;height:58px;border-radius:12px;background:var(--petrol-light);color:var(--petrol);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden}
 .list-item .thumb img{width:100%;height:100%;object-fit:cover}
 .list-item .meta{flex:1;min-width:0}
-.list-item .t{font-weight:600}
+.list-item .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .list-item .s{font-size:14px;color:var(--marine-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .badge{display:inline-block;font-size:12px;font-weight:700;padding:4px 9px;border-radius:20px;color:var(--white);white-space:nowrap}
-.st-Mottatt{background:var(--marine-muted)}
-.st-Under{background:var(--marine)}
-.st-Tildelt{background:var(--petrol)}
-.st-Utført{background:var(--orange)}
-.st-Løst{background:var(--white);color:var(--petrol);box-shadow:inset 0 0 0 2px var(--petrol)}
-.pri-Høy{color:var(--err);font-weight:700}.pri-Normal{color:var(--petrol)}.pri-Lav{color:var(--marine-muted)}
+.st-Mottatt{background:var(--marine-muted)}.st-Under{background:var(--marine)}.st-Tildelt{background:var(--petrol)}
+.st-Utført{background:var(--orange)}.st-Løst{background:var(--white);color:var(--petrol);box-shadow:inset 0 0 0 2px var(--petrol)}
 .timeline{border-left:3px solid var(--line);margin:8px 0 0 8px;padding-left:16px}
 .timeline .ev{position:relative;margin-bottom:14px}
-.timeline .ev:before{content:"";position:absolute;left:-23px;top:4px;width:11px;height:11px;border-radius:50%;background:var(--orange)}
+.timeline .ev:before{content:"";position:absolute;left:-23px;top:4px;width:11px;height:11px;border-radius:50%;background:var(--petrol)}
+.timeline .ev.public:before{background:var(--orange)}
+.timeline .ev.public{background:var(--orange-light);border-radius:10px;padding:8px 10px}
 .timeline .ev small{color:var(--marine-muted);display:block}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
-.kpi{background:var(--white);border-radius:14px;padding:10px 6px;text-align:center;box-shadow:0 1px 3px #18364A14}
-.kpi b{display:block;font-size:24px;color:var(--petrol)}
-.kpi span{font-size:11px;color:var(--marine-muted)}
-.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px}
-.chip{border:1px solid var(--line);background:var(--white);border-radius:20px;padding:7px 13px;font-size:14px;white-space:nowrap;color:var(--marine)}
-.chip.on{background:var(--petrol);color:var(--white);border-color:var(--petrol)}
 .notice{background:var(--orange-light);border:1px solid var(--orange-line);border-radius:14px;padding:12px;margin-bottom:12px;font-size:15px}
 .success{text-align:center;padding:30px 10px}
 .success .ic{font-size:76px;color:var(--petrol);display:flex;justify-content:center}
 .success .nr{font-size:28px;font-weight:800;color:var(--orange);letter-spacing:1px;margin:8px 0}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 70px);transform:translateX(-50%);background:var(--marine);color:var(--white);
-  padding:12px 18px;border-radius:14px;z-index:3000;font-size:15px;box-shadow:0 6px 20px #0004;max-width:92%;animation:fade .25s;display:flex;gap:8px;align-items:center}
-@keyframes fade{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:15px}
+  padding:12px 18px;border-radius:14px;z-index:3000;font-size:15px;box-shadow:0 6px 20px #0004;max-width:92%;display:flex;gap:8px;align-items:center}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:15px;margin-top:10px}
 .kv dt{color:var(--marine-muted)}.kv dd{margin:0}
 .muted{color:var(--marine-muted);font-size:14px}
 .install{display:none;margin-bottom:14px}
 .dup{background:var(--petrol-light);border:1px solid var(--petrol-line);border-radius:14px;padding:12px;margin-bottom:12px}
 .catrow{display:flex;gap:12px;align-items:center}
 .catrow .cic{font-size:30px;color:var(--petrol);display:flex}
-.follows{display:flex;align-items:center;gap:6px}
+.iconline{display:flex;align-items:center;gap:6px}
+.demo{display:inline-block;background:var(--orange-light);color:var(--err);border-radius:8px;padding:2px 8px;font-size:12px;font-weight:700}
+.loading{text-align:center;color:var(--marine-muted);padding:40px 0}
 .leaflet-container{font:inherit}
 .pin{width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid var(--white);box-shadow:0 2px 6px #0005;display:flex;align-items:center;justify-content:center}
 .pin i{transform:rotate(45deg);font-style:normal;font-size:15px;color:var(--white);display:flex}
@@ -133,149 +116,60 @@ label.l{display:block;font-weight:600;margin:12px 0 6px;font-size:15px}
     <button class="back" id="backBtn" style="display:none" aria-label="Tilbake"></button>
     <img src="icons/icon-192.png" alt="">
     <h1>MeldInn</h1>
-    <select id="roleSel" aria-label="Velg rolle (demo)">
-      <option value="innbygger">Innbygger</option>
-      <option value="kommune">Kommune</option>
-      <option value="leverandor">Leverandør</option>
-    </select>
+    <span class="muni" id="muni"></span>
   </header>
-  <main id="view"></main>
+  <main id="view"><div class="loading">Laster…</div></main>
   <nav class="tabs" id="tabs"></nav>
 </div>
 
 <script>
-/* ============ Ikoner (Lucide-stil, strek) ============ */
-const SVG={
-  lightbulb:'<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
-  construction:'<rect x="2" y="6" width="20" height="8" rx="1"/><path d="M17 14v7"/><path d="M7 14v7"/><path d="M17 3v3"/><path d="M7 3v3"/><path d="M10 14 2.3 6.3"/><path d="m14 6 7.7 7.7"/><path d="m8 6 8 8"/>',
-  trash:'<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>',
-  leaf:'<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
-  signpost:'<path d="M12 3v3"/><path d="M18.5 13h-13L2 9.5 5.5 6h13L22 9.5Z"/><path d="M12 13v8"/>',
-  help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
-  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
-  map:'<path d="M14.1 6.3 9.9 4.2a2 2 0 0 0-1.8 0L3.6 6.4A1 1 0 0 0 3 7.3v12.1a1 1 0 0 0 1.4.9l3.7-1.9a2 2 0 0 1 1.8 0l4.2 2.1a2 2 0 0 0 1.8 0l4.5-2.2a1 1 0 0 0 .6-.9V5.3a1 1 0 0 0-1.4-.9l-3.7 1.9a2 2 0 0 1-1.8 0z"/><path d="M15 6v15"/><path d="M9 3v15"/>',
-  clipboard:'<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
-  checkCircle:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
-  check:'<path d="M20 6 9 17l-5-5"/>',
-  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
-  navigation:'<polygon points="3 11 22 2 13 21 11 13 3 11"/>',
-  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-  locate:'<path d="M2 12h3"/><path d="M19 12h3"/><path d="M12 2v3"/><path d="M12 19v3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/>',
-  send:'<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
-  undo:'<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
-  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
-  chevronLeft:'<path d="m15 18-6-6 6-6"/>',
-  info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
-  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
-  home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
-  mapPin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
-  list:'<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
-  chart:'<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
-  wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
-  settings:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'
-};
-function ic(n,w){ return `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SVG[n]}</svg>`; }
+const C=MeldInnCore, S=MeldInnStore, ic=MeldInnIcon, cic=MeldInnCatIcon;
+const STATUS_COLORS={"Mottatt":"#5A6B78","Under behandling":"#18364A","Tildelt":"#0F626B","Utført":"#F97821","Løst":"#0F626B"};
+const MYKEY="meldinn_mine_v1";
+let CFG=null, VIS=null;
 
-/* ============ Konfig & data ============ */
-const CATS = {
-  gatelys:   {n:"Gatelys",        i:"lightbulb"},
-  vei:       {n:"Hull i veien",   i:"construction"},
-  soppel:    {n:"Søppel",         i:"trash"},
-  vegetasjon:{n:"Vegetasjon",     i:"leaf"},
-  skilt:     {n:"Skilt / benk",   i:"signpost"},
-  annet:     {n:"Annet",          i:"help"}
-};
-Object.values(CATS).forEach(c=>c.ic=ic(c.i));
-const SUPPLIERS = [
-  {id:"lys",  n:"Grenland Lys & Elektro AS", cats:["gatelys"],             ramme:15000},
-  {id:"vei",  n:"Telemark Veidrift AS",      cats:["vei","skilt"],         ramme:40000},
-  {id:"park", n:"Skien Park & Renhold AS",   cats:["soppel","vegetasjon","annet"], ramme:10000}
-];
-const STATUSES = ["Mottatt","Under behandling","Tildelt","Utført","Løst"];
-const STATUS_COLORS = {"Mottatt":"#5A6B78","Under behandling":"#18364A","Tildelt":"#0F626B","Utført":"#F97821","Løst":"#0F626B"};
-const CENTER = [59.2096, 9.6090]; // Skien sentrum
-const KEY = "meldinn_demo_v1", MYKEY = "meldinn_mine_v1";
+const $view=document.getElementById("view"), $tabs=document.getElementById("tabs"), $back=document.getElementById("backBtn");
+$back.innerHTML=ic("chevronLeft",2.5);
+let stack=[], maps=[], curTab=null, curArg=null, draft=null;
 
-function seed(){
-  const d = (h)=> new Date(Date.now()-h*3600e3).toISOString();
-  const mk=(id,cat,lat,lng,desc,status,h,extra={})=>({id,cat,lat,lng,desc,status,created:d(h),prio:"Normal",
-    supplier:null,photo:null,donePhoto:null,cost:null,follows:0,
-    history:[{t:d(h),txt:"Meldt inn"}],...extra});
-  return [
-    mk("SK-1041","gatelys",59.2121,9.6043,"Gatelyset blinker og slukker om kvelden","Tildelt",50,{supplier:"lys",prio:"Høy",follows:4,
-      history:[{t:d(50),txt:"Meldt inn"},{t:d(40),txt:"Prioritet satt til Høy"},{t:d(39),txt:"Tildelt Grenland Lys & Elektro AS"}]}),
-    mk("SK-1042","vei",59.2063,9.6155,"Dypt hull ved fotgjengerovergangen","Under behandling",30,{follows:7,
-      history:[{t:d(30),txt:"Meldt inn"},{t:d(20),txt:"Under behandling hos kommunen"}]}),
-    mk("SK-1043","soppel",59.2100,9.6000,"Full søppelkasse ved busstopp","Mottatt",5),
-    mk("SK-1044","vegetasjon",59.2152,9.6120,"Busker sperrer halve fortauet","Utført",90,{supplier:"park",cost:3200,
-      history:[{t:d(90),txt:"Meldt inn"},{t:d(80),txt:"Tildelt Skien Park & Renhold AS"},{t:d(10),txt:"Utført – busker klippet (kr 3 200)"}]}),
-    mk("SK-1045","gatelys",59.1405,9.6565,"To lys ute i Storgata","Løst",200,{supplier:"lys",cost:4800,follows:2,
-      history:[{t:d(200),txt:"Meldt inn"},{t:d(190),txt:"Tildelt Grenland Lys & Elektro AS"},{t:d(150),txt:"Utført – pærer byttet"},{t:d(149),txt:"Godkjent og løst"}]}),
-    mk("SK-1046","skilt",59.2080,9.6080,"Benk i parken er knekt","Mottatt",2)
-  ];
-}
-let DB = load();
-function load(){ try{ const x=JSON.parse(localStorage.getItem(KEY)); if(x&&x.length) return x;}catch(e){} const s=seed(); localStorage.setItem(KEY,JSON.stringify(s)); return s; }
-function save(){ try{ localStorage.setItem(KEY,JSON.stringify(DB)); }catch(e){ toast("Lagring full – bilder er for store for demoen","info"); } }
 function mine(){ try{return JSON.parse(localStorage.getItem(MYKEY))||[]}catch(e){return []} }
 function addMine(id){ const m=mine(); if(!m.includes(id)){m.push(id);localStorage.setItem(MYKEY,JSON.stringify(m));} }
-function byId(id){ return DB.find(c=>c.id===id); }
-function sup(id){ return SUPPLIERS.find(s=>s.id===id); }
-function nextId(){ const n=Math.max(1040,...DB.map(c=>+c.id.split("-")[1]))+1; return "SK-"+n; }
 function fmt(iso){ const d=new Date(iso); return d.toLocaleDateString("no-NO",{day:"numeric",month:"short"})+" "+d.toLocaleTimeString("no-NO",{hour:"2-digit",minute:"2-digit"}); }
-function esc(s){ return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function esc(s){ return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 function badge(s){ return `<span class="badge st-${s.split(" ")[0]}">${s}</span>`; }
-function dist(a,b,c,d){ const R=6371e3,t=Math.PI/180,x=(d-b)*t*Math.cos((a+c)/2*t),y=(c-a)*t; return Math.sqrt(x*x+y*y)*R; }
-function log(c,txt){ c.history.push({t:new Date().toISOString(),txt}); }
-
-/* ============ UI-hjelpere ============ */
-const $view=document.getElementById("view"), $tabs=document.getElementById("tabs"), $back=document.getElementById("backBtn"), $role=document.getElementById("roleSel");
-$back.innerHTML=ic("chevronLeft",2.5);
-let role=localStorage.getItem("meldinn_role")||"innbygger", stack=[], maps=[];
-$role.value=role;
+function title(c){ return c.desc || C.CATS[c.cat]; }
 function toast(msg,icon){ const t=document.createElement("div"); t.className="toast"; t.innerHTML=(icon?ic(icon):"")+`<span>${esc(msg)}</span>`; document.body.appendChild(t); setTimeout(()=>t.remove(),3200); }
-function notify(title,body){
-  toast(title+": "+body,"bell");
-  if("Notification" in window && Notification.permission==="granted"){
-    navigator.serviceWorker?.ready.then(r=>r.showNotification(title,{body,icon:"icons/icon-192.png"})).catch(()=>{});
-  }
-}
 function clearMaps(){ maps.forEach(m=>{try{m.remove()}catch(e){}}); maps=[]; }
-function pinIcon(c){
-  const col=STATUS_COLORS[c.status]||"#0F626B";
-  return L.divIcon({className:"",html:`<div class="pin" style="background:${col}"><i>${CATS[c.cat].ic}</i></div>`,iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]});
-}
+function pinIcon(c){ return L.divIcon({className:"",html:`<div class="pin" style="background:${STATUS_COLORS[c.status]||"#0F626B"}"><i>${cic(c.cat)}</i></div>`,iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]}); }
 function makeMap(el,center,zoom){
   if(typeof L==="undefined"){ document.getElementById(el).innerHTML='<div class="notice">Kartet krever nettilgang.</div>'; return null; }
-  const m=L.map(el,{zoomControl:true,attributionControl:true}).setView(center,zoom);
+  const m=L.map(el).setView(center,zoom);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(m);
   maps.push(m); setTimeout(()=>m.invalidateSize(),60); return m;
 }
-const TABS={
-  innbygger:[["home","Meld inn","home"],["kart","Kart","mapPin"],["mine","Mine saker","list"]],
-  kommune:[["dash","Oversikt","chart"],["saker","Saker","list"],["kart","Kart","mapPin"],["oppsett","Oppsett","settings"]],
-  leverandor:[["oppdrag","Oppdrag","wrench"],["kart","Kart","mapPin"]]
-};
-let curTab=null, curArg=null;
+const TABS=[["home","Meld inn","home"],["kart","Kart","mapPin"],["mine","Mine saker","list"]];
 function renderTabs(){
-  $tabs.innerHTML=TABS[role].map(([k,l,i])=>`<button data-k="${k}" class="${k===curTab?"active":""}">${ic(i)}<span>${l}</span></button>`).join("");
+  $tabs.innerHTML=TABS.map(([k,l,i])=>`<button data-k="${k}" class="${k===curTab?"active":""}">${ic(i)}<span>${l}</span></button>`).join("");
   $tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>{stack=[];go(b.dataset.k)});
 }
-function go(tab,arg,push){
+async function go(tab,arg,push){
   if(push) stack.push([curTab,curArg]);
   clearMaps(); curTab=tab; curArg=arg; renderTabs();
-  $back.style.display=stack.length?"flex":"none";
-  window.scrollTo(0,0);
-  (VIEWS[tab]||VIEWS.home)(arg);
+  $back.style.display=stack.length?"flex":"none"; window.scrollTo(0,0);
+  try{ await (VIEWS[tab]||VIEWS.home)(arg); }
+  catch(e){ $view.innerHTML=`<div class="notice">Noe gikk galt: ${esc(e.message)}</div>`; }
 }
 $back.onclick=()=>{ const p=stack.pop(); if(p) go(p[0],p[1]); };
-$role.onchange=()=>{ role=$role.value; localStorage.setItem("meldinn_role",role); stack=[]; go(TABS[role][0][0]); };
+function item(c){
+  return `<button class="list-item" data-id="${c.id}"><div class="thumb">${c.hasPhoto?`<img src="${S.photoUrl(c.id,"before")}" alt="">`:cic(c.cat)}</div>
+    <div class="meta"><div class="t">${esc(title(c))}</div><div class="s">${c.id} · ${C.CATS[c.cat]} · ${fmt(c.created)}</div></div>${badge(c.status)}</button>`;
+}
+function bindItems(){ $view.querySelectorAll(".list-item[data-id]").forEach(b=>b.onclick=()=>go("sak",b.dataset.id,true)); }
 
-/* ============ Innbygger ============ */
-let draft=null;
 const VIEWS={};
-VIEWS.home=()=>{
-  const open=DB.filter(c=>c.status!=="Løst").length, solved=DB.filter(c=>c.status==="Løst").length;
+VIEWS.home=async()=>{
+  const list=VIS.showOthers?await S.listPublic():[];
+  const open=list.filter(c=>c.status!=="Løst").length, solved=list.filter(c=>c.status==="Løst").length;
   $view.innerHTML=`
     <div class="card install" id="installCard"><b>Installer MeldInn</b><p class="muted" style="margin:4px 0 10px">Legg appen på hjemskjermen – ingen App Store nødvendig.</p><button class="btn small" id="installBtn">${ic("download")} Installer</button></div>
     <h2>Ser du noe som er ødelagt?</h2>
@@ -283,51 +177,56 @@ VIEWS.home=()=>{
     <button class="big-btn" id="startBtn">${ic("camera")} Meld inn et problem</button>
     <div style="height:14px"></div>
     <div class="row">
-      <button class="btn secondary" onclick="go('kart',null,false)">${ic("map")} Se meldte saker</button>
-      <button class="btn secondary" onclick="go('mine',null,false)">${ic("clipboard")} Mine saker</button>
+      ${VIS.showOthers?`<button class="btn secondary" onclick="go('kart')">${ic("map")} Se meldte saker</button>`:""}
+      <button class="btn secondary" onclick="go('mine')">${ic("clipboard")} Mine saker</button>
     </div>
-    <div style="height:16px"></div>
-    <div class="card"><div class="row" style="text-align:center">
+    ${VIS.showOthers?`<div style="height:16px"></div><div class="card"><div class="row" style="text-align:center">
       <div><b style="font-size:26px;color:var(--petrol)">${open}</b><div class="muted">åpne saker</div></div>
-      <div><b style="font-size:26px;color:var(--marine)">${solved}</b><div class="muted">fikset</div></div>
+      <div><b style="font-size:26px;color:var(--marine)">${solved}</b><div class="muted">nylig fikset</div></div>
       <div><b style="font-size:26px;color:var(--orange)">3</b><div class="muted">trykk for å melde</div></div>
-    </div></div>
-    <p class="muted" style="text-align:center">Demo · Skien kommune · Data lagres kun på denne enheten</p>`;
+    </div></div>`:""}
+    <p class="muted" style="text-align:center">${esc(CFG.municipality)}${S.mode==="local"?' · <span class="demo">Demomodus – lagres kun på denne enheten</span>':""}</p>`;
   document.getElementById("startBtn").onclick=()=>{ draft={cat:null,photo:null,lat:null,lng:null,desc:"",contact:""}; go("m1",null,true); };
-  if(deferredPrompt){ document.getElementById("installCard").style.display="block";
-    document.getElementById("installBtn").onclick=async()=>{deferredPrompt.prompt(); deferredPrompt=null; document.getElementById("installCard").style.display="none";}; }
+  if(deferredPrompt) showInstall();
 };
 function steps(n){ return `<div class="steps">${[1,2,3,4].map(i=>`<span class="${i<=n?"on":""}"></span>`).join("")}</div>`; }
-
-VIEWS.m1=()=>{ // kategori
+VIEWS.m1=()=>{
   $view.innerHTML=`${steps(1)}<h2>Hva gjelder det?</h2><div class="grid">${
-    Object.entries(CATS).map(([k,c])=>`<button class="tile ${draft.cat===k?"sel":""}" data-k="${k}"><span class="ic">${c.ic}</span>${c.n}</button>`).join("")}</div>`;
+    Object.entries(C.CATS).map(([k,n])=>`<button class="tile ${draft.cat===k?"sel":""}" data-k="${k}"><span class="ic">${cic(k)}</span>${n}</button>`).join("")}</div>`;
   $view.querySelectorAll(".tile").forEach(b=>b.onclick=()=>{draft.cat=b.dataset.k; go("m2",null,true);});
 };
-VIEWS.m2=()=>{ // bilde
-  $view.innerHTML=`${steps(2)}<h2>Ta et bilde</h2><p class="lead">Et bilde hjelper oss å forstå problemet raskere.</p>
+VIEWS.m2=()=>{
+  $view.innerHTML=`${steps(2)}<h2>Ta et bilde</h2><p class="lead">Et bilde hjelper oss å forstå problemet raskere. Unngå å ta bilde av personer og bilskilt.</p>
     <input type="file" id="cam" accept="image/*" capture="environment" hidden>
     ${draft.photo?`<img class="photo-prev" src="${draft.photo}">`:`<label for="cam" class="photo-drop"><span class="ic">${ic("camera",1.75)}</span>Trykk for å ta bilde</label>`}
-    ${draft.photo?`<button class="btn secondary" id="retake">${ic("camera")} Ta nytt bilde</button><div style="height:10px"></div><button class="btn brown" id="next">Neste</button>`
+    ${draft.photo?`<button class="btn secondary" id="retake">${ic("camera")} Ta nytt bilde</button><div style="height:10px"></div><button class="btn orange" id="next">Neste</button>`
       :`<button class="btn secondary" id="skip">Hopp over bilde</button>`}`;
   const cam=document.getElementById("cam");
-  cam.onchange=async e=>{ const f=e.target.files[0]; if(!f) return; draft.photo=await shrink(f,900); VIEWS.m2(); };
+  cam.onchange=async e=>{ const f=e.target.files[0]; if(!f) return; draft.photo=await shrink(f,1000); VIEWS.m2(); };
   document.getElementById("retake")?.addEventListener("click",()=>cam.click());
   document.getElementById("next")?.addEventListener("click",()=>go("m3",null,true));
   document.getElementById("skip")?.addEventListener("click",()=>go("m3",null,true));
 };
 function shrink(file,max){ return new Promise(res=>{ const r=new FileReader(); r.onload=()=>{ const img=new Image(); img.onload=()=>{
-  const s=Math.min(1,max/Math.max(img.width,img.height)); const cv=document.createElement("canvas"); cv.width=img.width*s; cv.height=img.height*s;
-  cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height); res(cv.toDataURL("image/jpeg",0.7)); }; img.src=r.result; }; r.readAsDataURL(file); }); }
+  const s=Math.min(1,max/Math.max(img.width,img.height)); const cv=document.createElement("canvas"); cv.width=Math.round(img.width*s); cv.height=Math.round(img.height*s);
+  cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height); res(cv.toDataURL("image/jpeg",0.72)); }; img.src=r.result; }; r.readAsDataURL(file); }); }
 
-VIEWS.m3=()=>{ // sted + duplikatsjekk
+VIEWS.m3=async()=>{
   $view.innerHTML=`${steps(3)}<h2>Bekreft stedet</h2><p class="lead">Dra nålen til riktig sted om nødvendig.</p>
     <div id="pickmap"></div><div id="dupBox"></div>
     <button class="btn secondary" id="gps">${ic("locate")} Bruk min posisjon</button><div style="height:10px"></div>
-    <button class="btn brown" id="next">${ic("check")} Stedet stemmer</button>`;
-  const start=draft.lat?[draft.lat,draft.lng]:CENTER;
-  const m=makeMap("pickmap",start,16); if(!m){ draft.lat=CENTER[0]; draft.lng=CENTER[1]; }
+    <button class="btn orange" id="next">${ic("check")} Stedet stemmer</button>`;
+  const nearby=VIS.showOthers?await S.listPublic().catch(()=>[]):[];
+  const start=draft.lat?[draft.lat,draft.lng]:CFG.center;
+  const m=makeMap("pickmap",start,16); if(!m){ draft.lat=start[0]; draft.lng=start[1]; }
   let mk=null;
+  const checkDup=()=>{
+    const box=document.getElementById("dupBox"); if(!box) return;
+    const near=nearby.filter(c=>c.status!=="Løst"&&c.cat===draft.cat&&C.dist(c.lat,c.lng,draft.lat,draft.lng)<120);
+    box.innerHTML=near.length?`<div class="dup"><b>Allerede meldt i nærheten?</b><p class="muted" style="margin:4px 0 8px">Følg saken i stedet, så slipper vi dobbeltmeldinger.</p>${
+      near.map(c=>`<button class="list-item" data-id="${c.id}"><div class="thumb">${cic(c.cat)}</div><div class="meta"><div class="t">${esc(title(c))}</div><div class="s">${c.id} · ca. ${Math.round(C.dist(c.lat,c.lng,draft.lat,draft.lng))} m unna</div></div>${badge(c.status)}</button>`).join("")}</div>`:"";
+    box.querySelectorAll("[data-id]").forEach(b=>b.onclick=async()=>{ await S.follow(b.dataset.id); addMine(b.dataset.id); toast("Du følger nå sak "+b.dataset.id,"bell"); stack=[]; go("sak",b.dataset.id); });
+  };
   const setPos=(lat,lng)=>{ draft.lat=lat; draft.lng=lng; if(m){ if(!mk){ mk=L.marker([lat,lng],{draggable:true}).addTo(m);
       mk.on("dragend",()=>{const p=mk.getLatLng(); setPos(p.lat,p.lng);}); } else mk.setLatLng([lat,lng]); } checkDup(); };
   if(m){ m.on("click",e=>setPos(e.latlng.lat,e.latlng.lng)); setPos(start[0],start[1]); }
@@ -335,184 +234,79 @@ VIEWS.m3=()=>{ // sted + duplikatsjekk
     navigator.geolocation.getCurrentPosition(p=>{ setPos(p.coords.latitude,p.coords.longitude); m&&m.setView([p.coords.latitude,p.coords.longitude],17); },
       ()=>toast("Fikk ikke posisjon – dra nålen manuelt","info"),{enableHighAccuracy:true,timeout:8000}); };
   document.getElementById("gps").onclick=locate;
-  if(!draft.lat) locate();
+  if(!draft.lat||draft.lat===CFG.center[0]) locate();
   document.getElementById("next").onclick=()=>go("m4",null,true);
 };
-function checkDup(){
-  const box=document.getElementById("dupBox"); if(!box) return;
-  const near=DB.filter(c=>c.status!=="Løst"&&c.cat===draft.cat&&dist(c.lat,c.lng,draft.lat,draft.lng)<120);
-  box.innerHTML=near.length?`<div class="dup"><b>Allerede meldt i nærheten?</b><p class="muted" style="margin:4px 0 8px">Følg saken i stedet, så slipper vi dobbeltmeldinger.</p>${
-    near.map(c=>`<button class="list-item" data-id="${c.id}"><div class="thumb">${CATS[c.cat].ic}</div><div class="meta"><div class="t">${esc(c.desc)}</div><div class="s">${c.id} · ${Math.round(dist(c.lat,c.lng,draft.lat,draft.lng))} m unna</div></div>${badge(c.status)}</button>`).join("")}</div>`:"";
-  box.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{ const c=byId(b.dataset.id); c.follows++; log(c,"Ny innbygger følger saken"); save(); addMine(c.id);
-    toast("Du følger nå sak "+c.id,"bell"); stack=[]; go("sak",c.id,false); });
-}
-VIEWS.m4=()=>{ // beskrivelse + send
-  const c=CATS[draft.cat];
+VIEWS.m4=()=>{
   $view.innerHTML=`${steps(4)}<h2>Noe mer vi bør vite?</h2>
-    <div class="card"><div class="catrow"><div class="cic">${c.ic}</div><div style="flex:1"><b>${c.n}</b><div class="muted">${draft.lat.toFixed(4)}, ${draft.lng.toFixed(4)}</div></div>
+    <div class="card"><div class="catrow"><div class="cic">${cic(draft.cat)}</div><div style="flex:1"><b>${C.CATS[draft.cat]}</b><div class="muted">${draft.lat.toFixed(4)}, ${draft.lng.toFixed(4)}</div></div>
     ${draft.photo?`<img src="${draft.photo}" style="width:64px;height:64px;object-fit:cover;border-radius:10px">`:""}</div></div>
-    <label class="l">Kort beskrivelse (valgfritt)</label><textarea id="desc" placeholder="F.eks. «Lyset har vært ute i en uke»">${esc(draft.desc)}</textarea>
-    <label class="l">Vil du få beskjed når det er fikset? (valgfritt)</label><input type="text" id="contact" placeholder="E-post eller mobilnummer" value="${esc(draft.contact)}">
-    <div style="height:18px"></div><button class="big-btn" id="send">${ic("send")} Send inn</button>`;
-  document.getElementById("send").onclick=async()=>{
+    <label class="l">Kort beskrivelse (valgfritt)</label><textarea id="desc" maxlength="500" placeholder="F.eks. «Lyset har vært ute i en uke»">${esc(draft.desc)}</textarea>
+    <label class="l">Vil du få beskjed når det er fikset? (valgfritt)</label><input type="text" id="contact" maxlength="120" placeholder="E-post eller mobilnummer" value="${esc(draft.contact)}">
+    <p class="muted">Kontaktinfo vises bare for kommunen.</p>
+    <button class="big-btn" id="send">${ic("send")} Send inn</button>`;
+  const btn=document.getElementById("send");
+  btn.onclick=async()=>{
+    btn.disabled=true;
     draft.desc=document.getElementById("desc").value.trim(); draft.contact=document.getElementById("contact").value.trim();
-    const id=nextId();
-    const cs={id,cat:draft.cat,lat:draft.lat,lng:draft.lng,desc:draft.desc||CATS[draft.cat].n,status:"Mottatt",created:new Date().toISOString(),
-      prio:"Normal",supplier:null,photo:draft.photo,donePhoto:null,cost:null,follows:0,contact:draft.contact,history:[{t:new Date().toISOString(),txt:"Meldt inn"}]};
-    const rule=SETTINGS.autoroute&&SUPPLIERS.find(s=>s.cats.includes(cs.cat)&&SETTINGS.auto[s.id]);
-    if(rule){ cs.supplier=rule.id; cs.status="Tildelt"; log(cs,"Automatisk sendt til "+rule.n+" (forhåndsavtale)"); }
-    DB.unshift(cs); save(); addMine(id);
-    if("Notification" in window && Notification.permission==="default"){ try{ await Notification.requestPermission(); }catch(e){} }
-    draft=null; stack=[]; go("kvittering",id,false);
+    try{
+      const c=await S.create({cat:draft.cat,lat:draft.lat,lng:draft.lng,desc:draft.desc,contact:draft.contact,photo:draft.photo});
+      addMine(c.id); draft=null; stack=[]; go("kvittering",c.id);
+    }catch(e){ btn.disabled=false; toast("Kunne ikke sende: "+e.message,"info"); }
   };
 };
 VIEWS.kvittering=(id)=>{
-  const c=byId(id);
   $view.innerHTML=`<div class="success"><div class="ic">${ic("checkCircle",1.75)}</div><h2 style="justify-content:center">Takk! Meldingen er sendt</h2>
-    <div class="muted">Saksnummer</div><div class="nr">${id}</div>
-    <p class="lead">${c.supplier?"Saken er sendt direkte til "+sup(c.supplier).n+".":"Saken er sendt til ansvarlig i kommunen."} Du finner den under «Mine saker».</p>
-    <button class="btn" onclick="go('sak','${id}',false)">${ic("bell")} Følg saken</button><div style="height:10px"></div>
+    <div class="muted">Saksnummer</div><div class="nr">${esc(id)}</div>
+    <p class="lead">Saken er sendt til ${esc(CFG.municipality)}. Du finner den under «Mine saker».</p>
+    <button class="btn" onclick="go('sak','${esc(id)}')">${ic("bell")} Følg saken</button><div style="height:10px"></div>
     <button class="btn secondary" onclick="go('home')">${ic("home")} Til forsiden</button></div>`;
 };
-VIEWS.mine=()=>{
-  const list=mine().map(byId).filter(Boolean);
+VIEWS.mine=async()=>{
+  const ids=mine(); const list=ids.length?await S.listPublic(ids):[];
+  list.sort((a,b)=>b.created.localeCompare(a.created));
   $view.innerHTML=`<h2>Mine saker</h2>${list.length?list.map(item).join(""):`<div class="card"><p class="muted" style="margin:0">Du har ikke meldt inn eller fulgt noen saker ennå.</p></div>`}`;
-  bindItems("sak");
+  bindItems();
 };
-function item(c){
-  const s=c.supplier?sup(c.supplier).n:"Ikke tildelt";
-  return `<button class="list-item" data-id="${c.id}"><div class="thumb">${c.photo?`<img src="${c.photo}">`:CATS[c.cat].ic}</div>
-    <div class="meta"><div class="t">${esc(c.desc)}</div><div class="s">${c.id} · ${fmt(c.created)}${role!=="innbygger"?" · "+s:""}</div></div>${badge(c.status)}</button>`;
-}
-function bindItems(view){ $view.querySelectorAll(".list-item[data-id]").forEach(b=>b.onclick=()=>go(view,b.dataset.id,true)); }
-VIEWS.sak=(id)=>{ // innbyggervisning
-  const c=byId(id);
-  $view.innerHTML=`<h2>${CATS[c.cat].ic} ${CATS[c.cat].n}</h2>
+VIEWS.sak=async(id)=>{
+  const c=await S.getPublic(id), mineNow=mine().includes(c.id);
+  const kv=[["Kategori",C.CATS[c.cat]],["Meldt",fmt(c.created)]];
+  if(c.supplier) kv.push(["Utføres av",esc(c.supplier)]);
+  if(c.prio) kv.push(["Prioritet",c.prio]);
+  if(c.cost) kv.push(["Kostnad","kr "+c.cost.toLocaleString("no-NO")]);
+  $view.innerHTML=`<h2>${cic(c.cat)} ${C.CATS[c.cat]}</h2>
     <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>${c.id}</b>${badge(c.status)}</div>
-    <p>${esc(c.desc)}</p>${c.photo?`<img class="photo-prev" src="${c.photo}">`:""}
-    ${c.donePhoto?`<h3>Etter utbedring</h3><img class="photo-prev" src="${c.donePhoto}">`:""}
-    <div class="muted follows">${ic("users")} ${c.follows} andre følger denne saken</div></div>
-    <div class="card"><h3>Status</h3><div class="timeline">${c.history.slice().reverse().map(h=>`<div class="ev">${esc(h.txt)}<small>${fmt(h.t)}</small></div>`).join("")}</div></div>
-    ${!mine().includes(c.id)?`<button class="btn" id="follow">${ic("bell")} Følg saken</button>`:""}`;
-  document.getElementById("follow")?.addEventListener("click",()=>{ c.follows++; log(c,"Ny innbygger følger saken"); save(); addMine(c.id); toast("Du følger nå saken","bell"); VIEWS.sak(id); });
+    ${c.desc?`<p>${esc(c.desc)}</p>`:""}
+    ${c.hasPhoto?`<img class="photo-prev" src="${S.photoUrl(c.id,"before")}" alt="Innsendt bilde">`:""}
+    ${c.hasAfter?`<h3>Etter utbedring</h3><img class="photo-prev" src="${S.photoUrl(c.id,"after")}" alt="Bilde etter utbedring">`:""}
+    <dl class="kv">${kv.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
+    ${c.follows!==undefined?`<p class="muted iconline">${ic("users")} ${c.follows} andre følger denne saken</p>`:""}</div>
+    <div class="card"><h3>Status</h3><div class="timeline">${c.history.slice().reverse().map(h=>`<div class="ev ${h.kind==="public"?"public":""}">${h.kind==="public"?`<b class="iconline">${ic("message")} Melding fra kommunen</b>`:""}${esc(h.txt)}<small>${fmt(h.t)}</small></div>`).join("")}</div></div>
+    ${!mineNow?`<button class="btn" id="follow">${ic("bell")} Følg saken</button>`:""}`;
+  document.getElementById("follow")?.addEventListener("click",async()=>{ await S.follow(c.id); addMine(c.id); toast("Du følger nå saken","bell"); VIEWS.sak(c.id); });
 };
-VIEWS.kart=()=>{
-  const open=DB.filter(c=>role==="leverandor"?c.supplier===SETTINGS.me:true);
-  $view.innerHTML=`<h2>${role==="innbygger"?"Meldte saker":"Kart"}</h2><div id="bigmap"></div>`;
-  const m=makeMap("bigmap",CENTER,14); if(!m) return;
-  const target=role==="innbygger"?"sak":role==="kommune"?"admin":"jobb";
-  open.forEach(c=>{ L.marker([c.lat,c.lng],{icon:pinIcon(c)}).addTo(m)
-    .bindPopup(`<b>${CATS[c.cat].n}</b><br>${esc(c.desc)}<br>${badge(c.status)}<br><a href="#" data-id="${c.id}">Åpne sak ${c.id}</a>`)
-    .on("popupopen",e=>{ e.popup.getElement().querySelector("a").onclick=(ev)=>{ev.preventDefault();go(target,c.id,true);} }); });
-};
-
-/* ============ Kommune ============ */
-const SETTINGS=Object.assign({autoroute:false,auto:{lys:true,vei:false,park:true},me:"lys"},JSON.parse(localStorage.getItem("meldinn_set")||"{}"));
-function saveSet(){ localStorage.setItem("meldinn_set",JSON.stringify(SETTINGS)); }
-VIEWS.dash=()=>{
-  const cnt=s=>DB.filter(c=>c.status===s).length;
-  const solved=DB.filter(c=>c.status==="Løst");
-  const avg=solved.length?Math.round(solved.reduce((a,c)=>a+(new Date(c.history[c.history.length-1].t)-new Date(c.created))/864e5,0)/solved.length*10)/10:"–";
-  const cost=DB.reduce((a,c)=>a+(c.cost||0),0);
-  $view.innerHTML=`<h2>Oversikt – Skien kommune</h2>
-    <div class="kpis"><div class="kpi"><b>${cnt("Mottatt")}</b><span>Nye</span></div><div class="kpi"><b>${cnt("Under behandling")+cnt("Tildelt")}</b><span>Pågår</span></div>
-    <div class="kpi"><b>${cnt("Utført")}</b><span>Til godkj.</span></div><div class="kpi"><b>${cnt("Løst")}</b><span>Løst</span></div></div>
-    <div class="card"><div class="kv"><dt>Snitt tid til løst</dt><dd><b>${avg}</b> dager</dd><dt>Påløpt kostnad</dt><dd><b>kr ${cost.toLocaleString("no-NO")}</b></dd>
-    <dt>Dobbeltmeldinger unngått</dt><dd><b>${DB.reduce((a,c)=>a+c.follows,0)}</b></dd></div></div>
-    <div id="adminmap"></div>
-    <h3>Krever handling</h3>${DB.filter(c=>["Mottatt","Utført"].includes(c.status)).map(item).join("")||'<p class="muted">Ingenting akkurat nå.</p>'}`;
-  bindItems("admin");
-  const m=makeMap("adminmap",CENTER,13);
-  if(m) DB.filter(c=>c.status!=="Løst").forEach(c=>L.marker([c.lat,c.lng],{icon:pinIcon(c)}).addTo(m).on("click",()=>go("admin",c.id,true)));
-};
-let filt="Alle";
-VIEWS.saker=()=>{
-  const list=DB.filter(c=>filt==="Alle"||c.status===filt);
-  $view.innerHTML=`<h2>Alle saker</h2><div class="chips">${["Alle",...STATUSES].map(s=>`<button class="chip ${s===filt?"on":""}" data-s="${s}">${s}</button>`).join("")}</div>${list.map(item).join("")||'<p class="muted">Ingen saker</p>'}`;
-  $view.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{filt=b.dataset.s;VIEWS.saker();});
-  bindItems("admin");
-};
-VIEWS.admin=(id)=>{
-  const c=byId(id), s=c.supplier&&sup(c.supplier);
-  const opts=SUPPLIERS.map(x=>`<option value="${x.id}" ${x.id===c.supplier?"selected":""}>${x.n}${x.cats.includes(c.cat)?" (avtale)":""}</option>`).join("");
-  $view.innerHTML=`<h2>${CATS[c.cat].ic} ${c.id}</h2>
-    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>${CATS[c.cat].n}</b>${badge(c.status)}</div>
-    <p>${esc(c.desc)}</p>${c.photo?`<img class="photo-prev" src="${c.photo}">`:""}
-    <dl class="kv"><dt>Meldt</dt><dd>${fmt(c.created)}</dd><dt>Prioritet</dt><dd class="pri-${c.prio}">${c.prio}</dd><dt>Følgere</dt><dd>${c.follows}</dd>
-    <dt>Leverandør</dt><dd>${s?s.n:"–"}</dd>${s?`<dt>Fullmakt</dt><dd>inntil kr ${s.ramme.toLocaleString("no-NO")}</dd>`:""}${c.cost?`<dt>Kostnad</dt><dd>kr ${c.cost.toLocaleString("no-NO")}</dd>`:""}${c.contact?`<dt>Varsling</dt><dd>${esc(c.contact)}</dd>`:""}</dl></div>
-    ${c.donePhoto?`<div class="card"><h3>Dokumentasjon fra leverandør</h3><img class="photo-prev" src="${c.donePhoto}"></div>`:""}
-    ${c.status==="Utført"?`<button class="btn ok" id="approve">${ic("checkCircle")} Godkjenn og lukk saken</button><div style="height:10px"></div><button class="btn secondary" id="reject">${ic("undo")} Send tilbake til leverandør</button>`:""}
-    ${["Mottatt","Under behandling","Tildelt"].includes(c.status)?`
-    <div class="card"><h3>Behandle</h3>
-      <label class="l">Prioritet</label><div class="chips">${["Høy","Normal","Lav"].map(p=>`<button class="chip ${p===c.prio?"on":""}" data-p="${p}">${p}</button>`).join("")}</div>
-      <label class="l">Tildel leverandør</label><select class="f" id="supSel"><option value="">Velg…</option>${opts}</select>
-      <div style="height:12px"></div><div class="row"><button class="btn secondary small" id="inprog">Under behandling</button><button class="btn small" id="assign">${ic("send")} Tildel</button></div>
-      <div style="height:10px"></div><button class="btn secondary small" id="closeNo">${ic("x")} Lukk uten tiltak</button>
-    </div>`:""}
-    <div class="card"><h3>Historikk</h3><div class="timeline">${c.history.slice().reverse().map(h=>`<div class="ev">${esc(h.txt)}<small>${fmt(h.t)}</small></div>`).join("")}</div></div>`;
-  $view.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ c.prio=b.dataset.p; log(c,"Prioritet satt til "+c.prio); save(); VIEWS.admin(id); });
-  const on=(i,f)=>document.getElementById(i)?.addEventListener("click",f);
-  on("inprog",()=>{ c.status="Under behandling"; log(c,"Under behandling hos kommunen"); save(); notifyCitizen(c,"Saken din er under behandling"); VIEWS.admin(id); });
-  on("assign",()=>{ const v=document.getElementById("supSel").value; if(!v){toast("Velg leverandør","info");return;}
-    c.supplier=v; c.status="Tildelt"; log(c,"Tildelt "+sup(v).n); save(); toast("Sendt til "+sup(v).n,"send"); notifyCitizen(c,"Saken er sendt til utfører"); VIEWS.admin(id); });
-  on("closeNo",()=>{ c.status="Løst"; log(c,"Lukket – ingen tiltak nødvendig"); save(); VIEWS.admin(id); });
-  on("approve",()=>{ c.status="Løst"; log(c,"Godkjent og løst"); save(); notifyCitizen(c,"Problemet er fikset – takk for at du meldte fra!"); VIEWS.admin(id); });
-  on("reject",()=>{ c.status="Tildelt"; log(c,"Sendt tilbake til leverandør for utbedring"); save(); VIEWS.admin(id); });
-};
-function notifyCitizen(c,msg){ if(mine().includes(c.id)) notify("MeldInn "+c.id,msg); }
-VIEWS.oppsett=()=>{
-  $view.innerHTML=`<h2>Oppsett</h2>
-    <div class="card"><h3>Direkte ruting til leverandør</h3><p class="muted">Når dette er på, går nye meldinger rett til avtalt leverandør innenfor fullmakt – kommunen beholder oversikten.</p>
-      <label style="display:flex;gap:10px;align-items:center;font-weight:600"><input type="checkbox" id="ar" ${SETTINGS.autoroute?"checked":""} style="width:22px;height:22px;accent-color:var(--petrol)"> Aktiver automatisk ruting</label></div>
-    <div class="card"><h3>Leverandøravtaler</h3>${SUPPLIERS.map(s=>`<div style="padding:10px 0;border-bottom:1px solid var(--line)">
-      <label style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" data-s="${s.id}" ${SETTINGS.auto[s.id]?"checked":""} style="width:20px;height:20px;margin-top:2px;accent-color:var(--petrol)">
-      <div><b>${s.n}</b><div class="muted">${s.cats.map(k=>CATS[k].n).join(", ")} · fullmakt kr ${s.ramme.toLocaleString("no-NO")}</div></div></label></div>`).join("")}</div>
-    <div class="card"><h3>Demo</h3><button class="btn secondary" id="reset">${ic("undo")} Nullstill demodata</button></div>`;
-  document.getElementById("ar").onchange=e=>{SETTINGS.autoroute=e.target.checked;saveSet();toast("Lagret","check");};
-  $view.querySelectorAll("[data-s]").forEach(b=>b.onchange=()=>{SETTINGS.auto[b.dataset.s]=b.checked;saveSet();});
-  document.getElementById("reset").onclick=()=>{ if(confirm("Nullstille alle demosaker?")){ localStorage.removeItem(KEY); localStorage.removeItem(MYKEY); DB=load(); toast("Demodata nullstilt","check"); } };
+VIEWS.kart=async()=>{
+  const list=VIS.showOthers?await S.listPublic():(mine().length?await S.listPublic(mine()):[]);
+  $view.innerHTML=`<h2>${VIS.showOthers?"Meldte saker":"Mine saker på kart"}</h2>${VIS.exactLocation?"":'<p class="muted">Posisjoner vises omtrentlig.</p>'}<div id="bigmap"></div>`;
+  const m=makeMap("bigmap",CFG.center,14); if(!m) return;
+  list.forEach(c=>{ L.marker([c.lat,c.lng],{icon:pinIcon(c)}).addTo(m)
+    .bindPopup(`<b>${C.CATS[c.cat]}</b><br>${esc(c.desc||"")}<br>${badge(c.status)}<br><a href="#">Åpne sak ${c.id}</a>`)
+    .on("popupopen",e=>{ e.popup.getElement().querySelector("a").onclick=(ev)=>{ev.preventDefault();go("sak",c.id,true);} }); });
 };
 
-/* ============ Leverandør ============ */
-VIEWS.oppdrag=()=>{
-  const me=sup(SETTINGS.me), list=DB.filter(c=>c.supplier===me.id&&["Tildelt","Utført"].includes(c.status));
-  $view.innerHTML=`<label class="l" style="margin-top:0">Innlogget som</label><select class="f" id="meSel">${SUPPLIERS.map(s=>`<option value="${s.id}" ${s.id===me.id?"selected":""}>${s.n}</option>`).join("")}</select>
-    <div class="notice" style="margin-top:12px">Fullmakt: utbedringer inntil <b>kr ${me.ramme.toLocaleString("no-NO")}</b> kan utføres uten ny godkjenning.</div>
-    <h2>Mine oppdrag (${list.length})</h2>${list.map(item).join("")||'<p class="muted">Ingen åpne oppdrag.</p>'}`;
-  document.getElementById("meSel").onchange=e=>{SETTINGS.me=e.target.value;saveSet();VIEWS.oppdrag();};
-  bindItems("jobb");
-};
-VIEWS.jobb=(id)=>{
-  const c=byId(id), me=sup(c.supplier||SETTINGS.me);
-  $view.innerHTML=`<h2>${CATS[c.cat].ic} ${c.id}</h2>
-    <div class="card"><div style="display:flex;justify-content:space-between">${badge(c.status)}<span class="pri-${c.prio}">${c.prio} prioritet</span></div>
-    <p>${esc(c.desc)}</p>${c.photo?`<img class="photo-prev" src="${c.photo}">`:""}
-    <a class="btn secondary small" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}">${ic("navigation")} Veibeskrivelse</a></div>
-    ${c.status==="Tildelt"?`<div class="card"><h3>Ferdigmeld jobben</h3>
-      <input type="file" id="cam" accept="image/*" capture="environment" hidden>
-      <div id="pv">${c._tmp?`<img class="photo-prev" src="${c._tmp}">`:`<label for="cam" class="photo-drop"><span class="ic">${ic("camera",1.75)}</span>Bilde etter utbedring</label>`}</div>
-      <label class="l">Kostnad (kr)</label><input type="number" id="cost" inputmode="numeric" placeholder="0">
-      <label class="l">Kommentar</label><textarea id="cm" placeholder="Hva ble gjort?"></textarea>
-      <div style="height:12px"></div><button class="btn ok" id="done">${ic("checkCircle")} Marker som utført</button></div>`
-     :`<div class="card"><p style="margin:0">Venter på godkjenning fra kommunen.</p></div>`}`;
-  const cam=document.getElementById("cam");
-  if(cam) cam.onchange=async e=>{ const f=e.target.files[0]; if(!f)return; c._tmp=await shrink(f,900); document.getElementById("pv").innerHTML=`<img class="photo-prev" src="${c._tmp}">`; };
-  document.getElementById("done")?.addEventListener("click",()=>{
-    const cost=+document.getElementById("cost").value||0, cm=document.getElementById("cm").value.trim();
-    if(cost>me.ramme && !confirm(`Kostnaden overstiger fullmakten på kr ${me.ramme.toLocaleString("no-NO")}. Sende til kommunen for godkjenning likevel?`)) return;
-    c.cost=cost; c.donePhoto=c._tmp||null; delete c._tmp; c.status="Utført";
-    log(c,`Utført av ${me.n}${cm?" – "+cm:""}${cost?" (kr "+cost.toLocaleString("no-NO")+")":""}${cost>me.ramme?" – over fullmakt":""}`);
-    save(); toast("Ferdigmeldt – kommunen er varslet","check"); notifyCitizen(c,"Utbedring er utført og venter på kontroll"); stack=[]; go("oppdrag");
-  });
-};
-
-/* ============ PWA ============ */
+/* PWA */
 let deferredPrompt=null;
-window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredPrompt=e; const c=document.getElementById("installCard"); if(c){ c.style.display="block";
-  document.getElementById("installBtn").onclick=()=>{deferredPrompt.prompt();deferredPrompt=null;c.style.display="none";}; } });
+function showInstall(){ const c=document.getElementById("installCard"); if(!c) return; c.style.display="block";
+  document.getElementById("installBtn").onclick=()=>{deferredPrompt.prompt();deferredPrompt=null;c.style.display="none";}; }
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredPrompt=e; showInstall(); });
 if("serviceWorker" in navigator && location.protocol!=="file:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 
-go(TABS[role][0][0]);
+(async()=>{
+  await S.init();
+  CFG=await S.publicSettings(); VIS=CFG.visibility;
+  document.getElementById("muni").textContent=CFG.municipality;
+  go("home");
+})();
 </script>
 </body>
 </html>

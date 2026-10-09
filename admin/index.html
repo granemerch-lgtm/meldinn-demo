@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeldInn Kommune</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/png" href="../icons/icon-192.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../shared/meldinn-core.js"></script>
+<script src="../shared/icons.js"></script>
+<script src="../shared/store.js"></script>
+<style>
+:root{
+  --petrol:#0F626B; --orange:#F97821; --offwhite:#F5F4EF; --marine:#18364A; --white:#FFFFFF;
+  --petrol-light:#E3EFF0; --petrol-line:#BCD8DB; --orange-light:#FEF0E5; --orange-line:#FBC9A3;
+  --marine-muted:#5A6B78; --line:#DEDCD3; --err:#C2410C;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--offwhite);color:var(--marine);font-family:"Segoe UI",-apple-system,Roboto,Helvetica,Arial,sans-serif;font-size:14px}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+svg.i{width:1.15em;height:1.15em;vertical-align:-0.2em;flex-shrink:0}
+.layout{display:grid;grid-template-columns:220px 1fr;grid-template-rows:56px 1fr;height:100vh}
+.top{grid-column:1/3;background:var(--petrol);color:var(--white);display:flex;align-items:center;gap:12px;padding:0 18px}
+.top img{width:32px;height:32px;border-radius:8px}
+.top h1{font-size:18px;margin:0;font-weight:700}
+.top .muni{opacity:.8;font-size:13px}
+.top .sp{flex:1}
+.top .user{display:flex;align-items:center;gap:10px;font-size:13px}
+.top a{color:var(--white);text-decoration:none;display:flex;align-items:center;gap:6px;opacity:.9}
+.demo{background:var(--orange);color:var(--white);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:700}
+.side{background:var(--white);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:4px}
+.side button{display:flex;align-items:center;gap:10px;background:none;border:none;border-radius:10px;padding:10px 12px;text-align:left;color:var(--marine)}
+.side button:hover{background:var(--offwhite)}
+.side button.on{background:var(--petrol-light);color:var(--petrol);font-weight:700}
+.side .cnt{margin-left:auto;background:var(--orange);color:var(--white);border-radius:10px;padding:0 7px;font-size:12px;font-weight:700}
+.side .foot{margin-top:auto;font-size:12px;color:var(--marine-muted);padding:8px}
+.main{overflow:auto;padding:18px 22px}
+h2{margin:0 0 14px;font-size:22px;color:var(--petrol)}
+h3{margin:0 0 10px;font-size:15px;color:var(--petrol)}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:var(--white);border-radius:12px;padding:12px 14px;box-shadow:0 1px 3px #18364A14;border-left:4px solid var(--petrol)}
+.kpi.o{border-left-color:var(--orange)}.kpi.m{border-left-color:var(--marine)}
+.kpi b{display:block;font-size:24px;color:var(--marine)}
+.kpi span{font-size:12px;color:var(--marine-muted)}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.bar .search{display:flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:0 10px;min-width:240px}
+.bar .search input{border:none;outline:none;padding:9px 0;width:100%;background:none}
+select,input[type=text],input[type=number],textarea{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--white)}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--petrol);border-color:var(--petrol)}
+textarea{width:100%;min-height:64px;resize:vertical}
+.chip{border:1px solid var(--line);background:var(--white);border-radius:20px;padding:6px 12px;font-size:13px;white-space:nowrap}
+.chip.on{background:var(--petrol);color:var(--white);border-color:var(--petrol)}
+.btn{display:inline-flex;align-items:center;gap:7px;border:none;border-radius:10px;background:var(--petrol);color:var(--white);font-weight:600;padding:9px 14px;white-space:nowrap}
+.btn.o{background:var(--orange)}.btn.m{background:var(--marine)}
+.btn.ghost{background:var(--white);color:var(--petrol);border:1.5px solid var(--petrol)}
+.btn:disabled{opacity:.5;cursor:default}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:16px;align-items:start}
+.split.nodetail{grid-template-columns:1fr}
+.tablewrap{background:var(--white);border-radius:12px;box-shadow:0 1px 3px #18364A14;overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:var(--marine);color:var(--white);text-align:left;font-weight:600;padding:10px;font-size:13px;white-space:nowrap;cursor:pointer;user-select:none}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+tr.r{cursor:pointer}
+tr.r:hover td{background:var(--offwhite)}
+tr.r.sel td{background:var(--petrol-light)}
+td.desc{max-width:260px;min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cat{display:inline-flex;align-items:center;gap:6px;color:var(--petrol);font-weight:600}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;color:var(--white);white-space:nowrap}
+.st-Mottatt{background:var(--marine-muted)}.st-Under{background:var(--marine)}.st-Tildelt{background:var(--petrol)}
+.st-Utført{background:var(--orange)}.st-Løst{background:var(--white);color:var(--petrol);box-shadow:inset 0 0 0 2px var(--petrol)}
+.pri-Høy{color:var(--err);font-weight:700}.pri-Lav{color:var(--marine-muted)}
+.bulk{display:none;background:var(--marine);color:var(--white);border-radius:12px;padding:10px 12px;margin-bottom:10px;align-items:center;gap:10px;flex-wrap:wrap}
+.bulk.show{display:flex}
+.bulk select{background:var(--white);color:var(--marine)}
+.panel{background:var(--white);border-radius:12px;box-shadow:0 1px 3px #18364A14;padding:16px;position:sticky;top:0;max-height:calc(100vh - 92px);overflow:auto}
+.panel .hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.panel .hd h3{margin:0;font-size:18px;flex:1}
+.panel .x{background:none;border:none;color:var(--marine-muted);font-size:18px;display:flex}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.photos figure{margin:0}.photos img{width:100%;height:130px;object-fit:cover;border-radius:10px;background:var(--petrol-light)}
+.photos figcaption{font-size:12px;color:var(--marine-muted)}
+#minimap{height:160px;border-radius:10px;overflow:hidden;margin:10px 0}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;margin:10px 0}
+.kv dt{color:var(--marine-muted)}.kv dd{margin:0}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--marine-muted);font-weight:600}
+.form .full{grid-column:1/3}
+.sec{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.warn{background:var(--orange-light);border:1px solid var(--orange-line);border-radius:10px;padding:8px 10px;font-size:13px}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{border-left:3px solid var(--line);padding:2px 0 10px 12px;position:relative}
+.hist li:before{content:"";position:absolute;left:-7px;top:5px;width:11px;height:11px;border-radius:50%;background:var(--petrol)}
+.hist li.internal:before{background:var(--marine-muted)}
+.hist li.public:before{background:var(--orange)}
+.hist small{display:block;color:var(--marine-muted);font-size:12px}
+.tag{font-size:11px;border-radius:6px;padding:1px 6px;margin-left:4px;font-weight:700}
+.tag.internal{background:var(--offwhite);color:var(--marine-muted)}
+.tag.public{background:var(--orange-light);color:var(--err)}
+.tag.status{background:var(--petrol-light);color:var(--petrol)}
+#bigmap{height:calc(100vh - 150px);border-radius:12px;overflow:hidden}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.card{background:var(--white);border-radius:12px;box-shadow:0 1px 3px #18364A14;padding:16px}
+.tg{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.tg:last-child{border-bottom:none}
+.tg .t{flex:1}.tg .t b{display:block}.tg .t span{font-size:12px;color:var(--marine-muted)}
+.switch{position:relative;width:42px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch i{position:absolute;inset:0;background:var(--line);border-radius:24px;transition:.2s}
+.switch i:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--white);border-radius:50%;transition:.2s}
+.switch input:checked+i{background:var(--petrol)}
+.switch input:checked+i:before{transform:translateX(18px)}
+.preview{background:var(--offwhite);border-radius:12px;padding:12px;font-size:13px}
+.preview .pc{background:var(--white);border-radius:10px;padding:12px}
+.sup{display:grid;grid-template-columns:1.6fr 2fr 100px 70px 30px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.sup .cats{display:flex;flex-wrap:wrap;gap:4px}
+.sup .cats label{font-size:12px;display:flex;gap:3px;align-items:center;background:var(--offwhite);border-radius:6px;padding:2px 6px}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--marine);color:var(--white);padding:12px 16px;border-radius:12px;z-index:3000;display:flex;gap:8px;align-items:center;box-shadow:0 6px 20px #0004}
+.empty{padding:30px;text-align:center;color:var(--marine-muted)}
+.pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid var(--white);box-shadow:0 2px 6px #0005;display:flex;align-items:center;justify-content:center}
+.pin i{transform:rotate(45deg);font-style:normal;font-size:14px;color:var(--white);display:flex}
+@media (max-width:1100px){.split{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,1fr)}.cards{grid-template-columns:1fr}.panel{position:static;max-height:none}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="top">
+    <img src="../icons/icon-192.png" alt="">
+    <h1>MeldInn Kommune</h1><span class="muni" id="muni"></span>
+    <span class="sp"></span>
+    <div class="user" id="user"></div>
+  </div>
+  <nav class="side" id="side"></nav>
+  <main class="main" id="view"><div class="empty">Laster…</div></main>
+</div>
+<script>
+const C=MeldInnCore, S=MeldInnStore, ic=MeldInnIcon, cic=MeldInnCatIcon;
+const STATUS_COLORS={"Mottatt":"#5A6B78","Under behandling":"#18364A","Tildelt":"#0F626B","Utført":"#F97821","Løst":"#0F626B"};
+let ALL=[], SET=null, ME=null, page="saker", sel=null, maps=[];
+let F={status:"Åpne",cat:"",sup:"",q:"",sort:"created",dir:-1}, checked=new Set();
+
+const $v=document.getElementById("view");
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=iso=>{ const d=new Date(iso); return d.toLocaleDateString("no-NO",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("no-NO",{hour:"2-digit",minute:"2-digit"}); };
+const badge=s=>`<span class="badge st-${s.split(" ")[0]}">${s}</span>`;
+const supName=id=>C.supplierName(SET,id)||"–";
+function toast(m,i){ const t=document.createElement("div"); t.className="toast"; t.innerHTML=ic(i||"check")+esc(m); document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
+function clearMaps(){ maps.forEach(m=>{try{m.remove()}catch(e){}}); maps=[]; }
+function makeMap(el,center,zoom){
+  if(typeof L==="undefined"){ document.getElementById(el).innerHTML='<div class="empty">Kartet krever nettilgang.</div>'; return null; }
+  const m=L.map(el).setView(center,zoom); L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(m);
+  maps.push(m); setTimeout(()=>m.invalidateSize(),60); return m;
+}
+const pinIcon=c=>L.divIcon({className:"",html:`<div class="pin" style="background:${STATUS_COLORS[c.status]}"><i>${cic(c.cat)}</i></div>`,iconSize:[30,30],iconAnchor:[15,30]});
+
+function renderSide(){
+  const nye=ALL.filter(c=>c.status==="Mottatt").length;
+  const items=[["saker","Saker","list",nye],["kart","Kart","map"],["synlighet","Innbyggervisning","eye"],["leverandorer","Leverandører & ruting","wrench"]];
+  document.getElementById("side").innerHTML=items.map(([k,l,i,n])=>`<button data-k="${k}" class="${k===page?"on":""}">${ic(i)} ${l}${n?`<span class="cnt">${n}</span>`:""}</button>`).join("")+
+    `<div class="foot">${S.mode==="api"?"Tilkoblet database":"Demomodus – data lagres kun i denne nettleseren"}<br><br><button class="btn ghost" id="demoBtn" style="width:100%">${ic("refresh")} ${S.mode==="api"?"Last inn demodata":"Nullstill demodata"}</button></div>`;
+  document.querySelectorAll(".side [data-k]").forEach(b=>b.onclick=()=>{page=b.dataset.k; render();});
+  document.getElementById("demoBtn").onclick=async()=>{ if(!confirm(S.mode==="api"?"Legge inn 6 demosaker i databasen?":"Nullstille alle demosaker?")) return; await S.loadDemo(); await reload(); toast("Demodata lastet"); };
+}
+async function reload(){ [ALL,SET]=await Promise.all([S.listAll(),S.settings()]); render(); }
+function render(){ clearMaps(); renderSide(); ({saker:pSaker,kart:pKart,synlighet:pSynlighet,leverandorer:pLev})[page](); }
+
+/* ---------------- Saker ---------------- */
+function filtered(){
+  const q=F.q.toLowerCase();
+  let l=ALL.filter(c=>(F.status==="Alle"||(F.status==="Åpne"?c.status!=="Løst":c.status===F.status))
+    &&(!F.cat||c.cat===F.cat)&&(!F.sup||(F.sup==="none"?!c.supplier:c.supplier===F.sup))
+    &&(!q||[c.id,c.desc,C.CATS[c.cat],supName(c.supplier),c.contact].join(" ").toLowerCase().includes(q)));
+  const pr={"Høy":0,"Normal":1,"Lav":2};
+  l.sort((a,b)=>{ let x=a[F.sort],y=b[F.sort]; if(F.sort==="prio"){x=pr[x];y=pr[y];} if(F.sort==="supplier"){x=supName(x);y=supName(y);}
+    return (x>y?1:x<y?-1:0)*F.dir; });
+  return l;
+}
+function pSaker(){
+  const cnt=s=>ALL.filter(c=>c.status===s).length;
+  const solved=ALL.filter(c=>c.status==="Løst"&&c.resolvedAt);
+  const avg=solved.length?(solved.reduce((a,c)=>a+(Date.parse(c.resolvedAt)-Date.parse(c.created))/864e5,0)/solved.length).toFixed(1):"–";
+  const l=filtered();
+  $v.innerHTML=`<h2>Saker</h2>
+  <div class="kpis">
+    <div class="kpi o"><b>${cnt("Mottatt")}</b><span>Nye – ikke behandlet</span></div>
+    <div class="kpi m"><b>${cnt("Under behandling")}</b><span>Under behandling</span></div>
+    <div class="kpi"><b>${cnt("Tildelt")}</b><span>Hos leverandør</span></div>
+    <div class="kpi o"><b>${cnt("Utført")}</b><span>Venter på godkjenning</span></div>
+    <div class="kpi"><b>${cnt("Løst")}</b><span>Løst</span></div>
+    <div class="kpi m"><b>${avg}</b><span>Snitt dager til løst</span></div>
+  </div>
+  <div class="bar">
+    ${["Åpne",...C.STATUSES,"Alle"].map(s=>`<button class="chip ${F.status===s?"on":""}" data-st="${s}">${s}</button>`).join("")}
+  </div>
+  <div class="bar">
+    <div class="search">${ic("search")}<input id="q" placeholder="Søk i ID, beskrivelse, kontakt…" value="${esc(F.q)}"></div>
+    <select id="fc"><option value="">Alle kategorier</option>${Object.entries(C.CATS).map(([k,n])=>`<option value="${k}" ${F.cat===k?"selected":""}>${n}</option>`).join("")}</select>
+    <select id="fs"><option value="">Alle leverandører</option><option value="none" ${F.sup==="none"?"selected":""}>Ikke tildelt</option>${SET.suppliers.map(s=>`<option value="${s.id}" ${F.sup===s.id?"selected":""}>${esc(s.n)}</option>`).join("")}</select>
+    <span style="flex:1"></span>
+    <button class="btn ghost" id="csv">${ic("fileDown")} Eksporter CSV</button>
+    <button class="btn ghost" id="rf">${ic("refresh")} Oppdater</button>
+  </div>
+  <div class="bulk ${checked.size?"show":""}" id="bulk"><b>${checked.size} valgt</b>
+    <select id="bs"><option value="">Sett status…</option>${C.STATUSES.map(s=>`<option>${s}</option>`).join("")}</select>
+    <select id="bl"><option value="">Tildel leverandør…</option>${SET.suppliers.map(s=>`<option value="${s.id}">${esc(s.n)}</option>`).join("")}</select>
+    <select id="bp"><option value="">Sett prioritet…</option>${C.PRIOS.map(s=>`<option>${s}</option>`).join("")}</select>
+    <button class="btn o" id="bgo">Utfør</button><button class="btn m" id="bx">Fjern valg</button></div>
+  <div class="split ${sel?"":"nodetail"}">
+    <div class="tablewrap">${l.length?`<table><thead><tr>
+      <th style="width:30px"><input type="checkbox" id="all" ${l.length&&l.every(c=>checked.has(c.id))?"checked":""}></th>
+      ${[["id","ID"],["cat","Kategori"],["desc","Beskrivelse"],["status","Status"],["prio","Prioritet"],["supplier","Leverandør"],["created","Meldt"],["follows","Følgere"]]
+        .map(([k,n])=>`<th data-sort="${k}">${n}${F.sort===k?(F.dir>0?" ▲":" ▼"):""}</th>`).join("")}
+    </tr></thead><tbody>${l.map(c=>`<tr class="r ${sel===c.id?"sel":""}" data-id="${c.id}">
+      <td><input type="checkbox" class="ck" data-id="${c.id}" ${checked.has(c.id)?"checked":""}></td>
+      <td><b>${c.id}</b></td><td><span class="cat">${cic(c.cat)} ${C.CATS[c.cat]}</span></td>
+      <td class="desc" title="${esc(c.desc)}">${esc(c.desc)}</td><td>${badge(c.status)}</td>
+      <td class="pri-${c.prio}">${c.prio}</td><td>${esc(supName(c.supplier))}</td><td>${fmt(c.created)}</td><td>${c.follows||0}</td></tr>`).join("")}
+    </tbody></table>`:'<div class="empty">Ingen saker med dette filteret.</div>'}</div>
+    ${sel?`<div class="panel" id="panel"></div>`:""}
+  </div>`;
+  $v.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{F.status=b.dataset.st;pSaker();});
+  const q=document.getElementById("q"); q.oninput=()=>{F.q=q.value; clearTimeout(q._t); q._t=setTimeout(()=>{pSaker(); const n=document.getElementById("q"); n.focus(); n.setSelectionRange(n.value.length,n.value.length);},250);};
+  document.getElementById("fc").onchange=e=>{F.cat=e.target.value;pSaker();};
+  document.getElementById("fs").onchange=e=>{F.sup=e.target.value;pSaker();};
+  document.getElementById("rf").onclick=async()=>{await reload(); toast("Oppdatert");};
+  document.getElementById("csv").onclick=()=>exportCsv(l);
+  $v.querySelectorAll("th[data-sort]").forEach(h=>h.onclick=()=>{ const k=h.dataset.sort; F.dir=F.sort===k?-F.dir:1; F.sort=k; pSaker(); });
+  $v.querySelectorAll("tr.r").forEach(r=>r.onclick=e=>{ if(e.target.type==="checkbox") return; sel=r.dataset.id; pSaker(); });
+  $v.querySelectorAll(".ck").forEach(b=>b.onchange=()=>{ b.checked?checked.add(b.dataset.id):checked.delete(b.dataset.id); pSaker(); });
+  const all=document.getElementById("all"); if(all) all.onchange=()=>{ l.forEach(c=>all.checked?checked.add(c.id):checked.delete(c.id)); pSaker(); };
+  document.getElementById("bx").onclick=()=>{checked.clear();pSaker();};
+  document.getElementById("bgo").onclick=async()=>{
+    const p={}; const s=document.getElementById("bs").value,l2=document.getElementById("bl").value,pr=document.getElementById("bp").value;
+    if(s)p.status=s; if(l2)p.supplier=l2; if(pr)p.prio=pr; if(!Object.keys(p).length) return toast("Velg en handling","info");
+    for(const id of checked) await S.update(id,Object.assign({},p),ME.name);
+    toast(`Oppdaterte ${checked.size} saker`); checked.clear(); await reload();
+  };
+  if(sel) renderPanel();
+}
+function exportCsv(l){
+  const head=["ID","Kategori","Beskrivelse","Status","Prioritet","Leverandør","Kostnad","Meldt","Løst","Følgere","Kontakt","Lat","Lng"];
+  const rows=l.map(c=>[c.id,C.CATS[c.cat],c.desc,c.status,c.prio,supName(c.supplier),c.cost||"",c.created,c.resolvedAt||"",c.follows||0,c.contact||"",c.lat,c.lng]);
+  const csv="\uFEFF"+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(";")).join("\r\n");
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download="meldinn-saker.csv"; a.click();
+}
+function renderPanel(){
+  const c=ALL.find(x=>x.id===sel); const P=document.getElementById("panel"); if(!c){sel=null;return pSaker();}
+  const sp=SET.suppliers.find(s=>s.id===c.supplier);
+  const match=SET.suppliers.filter(s=>s.cats.includes(c.cat)).map(s=>s.id);
+  const before=c.hasPhoto?S.photoUrl(c.id,"before"):"", after=c.hasAfter?S.photoUrl(c.id,"after"):"";
+  P.innerHTML=`<div class="hd">${cic(c.cat)}<h3>${c.id} · ${C.CATS[c.cat]}</h3>${badge(c.status)}<button class="x" id="cl" title="Lukk">${ic("x")}</button></div>
+    <div>${esc(c.desc)}</div>
+    ${before||after?`<div class="photos">${before?`<figure><a href="${before}" target="_blank"><img src="${before}" alt=""></a><figcaption>Fra innbygger</figcaption></figure>`:""}${after?`<figure><a href="${after}" target="_blank"><img src="${after}" alt=""></a><figcaption>Etter utbedring</figcaption></figure>`:""}</div>`:""}
+    <div id="minimap"></div>
+    <dl class="kv"><dt>Meldt</dt><dd>${fmt(c.created)}</dd><dt>Sist endret</dt><dd>${fmt(c.updated)}</dd>
+      <dt>Kontakt</dt><dd>${c.contact?esc(c.contact):'<span style="color:var(--marine-muted)">Ikke oppgitt</span>'}</dd>
+      <dt>Følgere</dt><dd>${c.follows||0}</dd><dt>Posisjon</dt><dd><a href="https://www.google.com/maps?q=${c.lat},${c.lng}" target="_blank">${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</a></dd></dl>
+    ${c.status==="Utført"?`<div class="warn" style="display:flex;gap:8px;align-items:center;justify-content:space-between">Leverandør har meldt jobben utført.<span><button class="btn" id="ok">${ic("checkCircle")} Godkjenn</button> <button class="btn ghost" id="rej">${ic("undo")} Avvis</button></span></div>`:""}
+    <div class="sec"><h3>Behandle</h3>
+    <div class="form">
+      <label>Status<select id="st">${C.STATUSES.map(s=>`<option ${s===c.status?"selected":""}>${s}</option>`).join("")}</select></label>
+      <label>Prioritet<select id="pr">${C.PRIOS.map(s=>`<option ${s===c.prio?"selected":""}>${s}</option>`).join("")}</select></label>
+      <label class="full">Leverandør<select id="su"><option value="">– Ikke tildelt –</option>${SET.suppliers.map(s=>`<option value="${s.id}" ${s.id===c.supplier?"selected":""}>${esc(s.n)}${match.includes(s.id)?" (avtale for kategorien)":""}</option>`).join("")}</select></label>
+      <label>Kostnad (kr)<input type="number" id="co" min="0" value="${c.cost??""}"></label>
+      <label>Fullmakt<input type="text" disabled value="${sp?"inntil kr "+sp.ramme.toLocaleString("no-NO"):"–"}"></label>
+      <div class="full warn" id="over" style="display:none">Kostnaden er over leverandørens fullmakt.</div>
+      <label class="full">Melding til innbygger (vises i appen)<textarea id="pm" placeholder="F.eks. «Elektriker kommer onsdag.»"></textarea></label>
+      <label class="full">Internt notat (vises ikke for innbygger)<textarea id="in" placeholder="Kun synlig for kommunen"></textarea></label>
+      <label class="full">Bilde etter utbedring<input type="file" id="af" accept="image/*"></label>
+    </div>
+    <button class="btn o" id="save" style="width:100%;justify-content:center">${ic("check")} Lagre endringer</button></div>
+    <div class="sec"><h3>Historikk</h3><ul class="hist">${c.history.slice().reverse().map(h=>`<li class="${h.kind}">${esc(h.txt)}<span class="tag ${h.kind}">${{status:"Status",public:"Til innbygger",internal:"Intern"}[h.kind]}</span><small>${fmt(h.t)}${h.by?" · "+esc(h.by):""}</small></li>`).join("")}</ul></div>`;
+  document.getElementById("cl").onclick=()=>{sel=null;pSaker();};
+  const co=document.getElementById("co"), su=document.getElementById("su");
+  const chk=()=>{ const s=SET.suppliers.find(x=>x.id===su.value); document.getElementById("over").style.display=s&&+co.value>s.ramme?"block":"none"; };
+  co.oninput=chk; su.onchange=chk; chk();
+  const m=makeMap("minimap",[c.lat,c.lng],16); if(m) L.marker([c.lat,c.lng],{icon:pinIcon(c)}).addTo(m);
+  const save=async(extra)=>{
+    const p=Object.assign({status:document.getElementById("st").value,prio:document.getElementById("pr").value,supplier:su.value||null,
+      cost:co.value===""?undefined:+co.value,publicMessage:document.getElementById("pm").value,internalNote:document.getElementById("in").value},extra||{});
+    const f=document.getElementById("af").files[0]; if(f) p.afterPhoto=await shrink(f,1200);
+    if(p.status===c.status) delete p.status;
+    await S.update(c.id,p,ME.name); toast("Lagret"); await reload();
+  };
+  document.getElementById("save").onclick=()=>save();
+  document.getElementById("ok")?.addEventListener("click",()=>save({status:"Løst"}));
+  document.getElementById("rej")?.addEventListener("click",()=>save({status:"Tildelt",internalNote:"Sendt tilbake til leverandør"}));
+}
+function shrink(file,max){ return new Promise(res=>{ const r=new FileReader(); r.onload=()=>{ const img=new Image(); img.onload=()=>{
+  const s=Math.min(1,max/Math.max(img.width,img.height)); const cv=document.createElement("canvas"); cv.width=Math.round(img.width*s); cv.height=Math.round(img.height*s);
+  cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height); res(cv.toDataURL("image/jpeg",0.75)); }; img.src=r.result; }; r.readAsDataURL(file); }); }
+
+/* ---------------- Kart ---------------- */
+function pKart(){
+  $v.innerHTML=`<h2>Kart – åpne saker</h2><div id="bigmap"></div>`;
+  const m=makeMap("bigmap",SET.center,13); if(!m) return;
+  ALL.filter(c=>c.status!=="Løst").forEach(c=>L.marker([c.lat,c.lng],{icon:pinIcon(c)}).addTo(m)
+    .bindTooltip(`${c.id} · ${C.CATS[c.cat]} · ${c.status}`).on("click",()=>{sel=c.id;page="saker";F.status="Alle";render();}));
+}
+
+/* ---------------- Innbyggervisning ---------------- */
+const VIS_OPTS=[
+  ["showOthers","Vis andres saker","Innbyggere ser alle meldte saker på kart og kan følge dem. Hindrer dobbeltmeldinger."],
+  ["showDescription","Vis beskrivelse","Teksten innbyggeren skrev. Slå av hvis dere vil kvalitetssikre tekst først."],
+  ["showPhotos","Vis innsendte bilder","Bilder kan inneholde personer eller bilskilt."],
+  ["showAfterPhoto","Vis bilde etter utbedring","Dokumentasjon fra leverandør."],
+  ["showSupplier","Vis leverandørnavn","Hvem som utfører jobben."],
+  ["showFollowers","Vis antall følgere",""],
+  ["showPriority","Vis prioritet",""],
+  ["showCost","Vis kostnad","Normalt av."],
+  ["exactLocation","Vis nøyaktig posisjon","Av = posisjon avrundes til ca. 100 m for andre."]
+];
+function pSynlighet(){
+  const v=SET.visibility;
+  $v.innerHTML=`<h2>Innbyggervisning</h2><p style="margin-top:-6px;color:var(--marine-muted)">Bestem hva innbyggerne ser i appen. Feltene filtreres bort på serveren, ikke bare skjult i appen. Kontaktinfo og interne notater vises aldri.</p>
+  <div class="cards"><div class="card">
+    ${VIS_OPTS.map(([k,n,d])=>`<div class="tg"><div class="t"><b>${n}</b>${d?`<span>${d}</span>`:""}</div><label class="switch"><input type="checkbox" data-v="${k}" ${v[k]?"checked":""}><i></i></label></div>`).join("")}
+    <div class="tg"><div class="t"><b>Historikk</b><span>Hva innbyggeren ser av saksforløpet</span></div>
+      <select id="hm"><option value="full" ${v.historyMode==="full"?"selected":""}>Status + meldinger fra kommunen</option><option value="status" ${v.historyMode==="status"?"selected":""}>Kun statusendringer</option></select></div>
+    <div class="tg"><div class="t"><b>Skjul løste saker etter</b><span>Fra kart og liste. Egne saker vises fortsatt.</span></div>
+      <input type="number" id="hd" min="0" style="width:80px" value="${v.hideResolvedAfterDays}"> dager</div>
+    <div style="margin-top:12px"><button class="btn o" id="sv">${ic("check")} Lagre</button></div>
+  </div>
+  <div class="card"><h3>${ic("eye")} Forhåndsvisning – slik ser innbyggeren en sak</h3><div class="preview" id="pv"></div></div></div>`;
+  const read=()=>{ const n=C.clone(SET); $v.querySelectorAll("[data-v]").forEach(i=>n.visibility[i.dataset.v]=i.checked);
+    n.visibility.historyMode=document.getElementById("hm").value; n.visibility.hideResolvedAfterDays=Math.max(0,+document.getElementById("hd").value||0); return n; };
+  const prev=()=>{ const n=read(); const sample=ALL.find(c=>c.history.length>3)||ALL[0]; const pv=document.getElementById("pv");
+    if(!sample){pv.innerHTML="Ingen saker å vise.";return;} const p=C.publicView(sample,n);
+    pv.innerHTML=`<div class="pc"><div style="display:flex;justify-content:space-between"><b>${p.id} · ${C.CATS[p.cat]}</b>${badge(p.status)}</div>
+      ${p.desc?`<p>${esc(p.desc)}</p>`:'<p style="color:var(--marine-muted)"><i>Beskrivelse skjult</i></p>'}
+      <dl class="kv">${p.supplier?`<dt>Utføres av</dt><dd>${esc(p.supplier)}</dd>`:""}${p.prio?`<dt>Prioritet</dt><dd>${p.prio}</dd>`:""}${p.cost?`<dt>Kostnad</dt><dd>kr ${p.cost.toLocaleString("no-NO")}</dd>`:""}${p.follows!==undefined?`<dt>Følgere</dt><dd>${p.follows}</dd>`:""}<dt>Posisjon</dt><dd>${p.lat}, ${p.lng}</dd></dl>
+      <ul class="hist">${p.history.slice().reverse().map(h=>`<li class="${h.kind}">${esc(h.txt)}<small>${fmt(h.t)}</small></li>`).join("")}</ul></div>
+      <p style="color:var(--marine-muted);margin:8px 0 0">Skjult for innbygger: ${(sample.history.length-p.history.length)} interne historikkpunkter${sample.contact?", kontaktinfo":""}.</p>`; };
+  $v.querySelectorAll("input,select").forEach(i=>i.addEventListener("change",prev)); prev();
+  document.getElementById("sv").onclick=async()=>{ SET=await S.saveSettings(read()); toast("Innbyggervisning lagret"); };
+}
+
+/* ---------------- Leverandører ---------------- */
+function pLev(){
+  const sups=C.clone(SET.suppliers);
+  const draw=()=>{
+    $v.innerHTML=`<h2>Leverandører & ruting</h2>
+    <div class="card" style="margin-bottom:16px">
+      <div class="tg"><div class="t"><b>Kommunenavn</b><span>Vises i appen</span></div><input type="text" id="mn" value="${esc(SET.municipality)}" style="width:260px"></div>
+      <div class="tg"><div class="t"><b>Automatisk ruting</b><span>Nye meldinger går rett til leverandør med avtale for kategorien (merket «Auto»). Kommunen beholder oversikten.</span></div>
+        <label class="switch"><input type="checkbox" id="ar" ${SET.autoroute?"checked":""}><i></i></label></div>
+    </div>
+    <div class="card"><div class="sup" style="font-weight:700;color:var(--marine-muted)"><span>Navn</span><span>Kategorier</span><span>Fullmakt (kr)</span><span>Auto</span><span></span></div>
+      ${sups.map((s,i)=>`<div class="sup" data-i="${i}">
+        <input type="text" class="sn" value="${esc(s.n)}">
+        <div class="cats">${Object.entries(C.CATS).map(([k,n])=>`<label><input type="checkbox" class="sc" value="${k}" ${s.cats.includes(k)?"checked":""}>${n}</label>`).join("")}</div>
+        <input type="number" class="sr" min="0" value="${s.ramme}">
+        <label class="switch"><input type="checkbox" class="sa" ${s.auto?"checked":""}><i></i></label>
+        <button class="btn ghost sd" title="Fjern" style="padding:6px">${ic("x")}</button></div>`).join("")}
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn ghost" id="add">${ic("plus")} Legg til leverandør</button><span style="flex:1"></span><button class="btn o" id="sv">${ic("check")} Lagre</button></div>
+    </div>`;
+    const sync=()=>$v.querySelectorAll(".sup[data-i]").forEach(r=>{ const s=sups[+r.dataset.i];
+      s.n=r.querySelector(".sn").value.trim(); s.ramme=+r.querySelector(".sr").value||0; s.auto=r.querySelector(".sa").checked;
+      s.cats=[...r.querySelectorAll(".sc:checked")].map(x=>x.value); });
+    $v.querySelectorAll(".sd").forEach(b=>b.onclick=()=>{ sync(); const i=+b.closest(".sup").dataset.i;
+      if(ALL.some(c=>c.supplier===sups[i].id&&c.status!=="Løst")&&!confirm("Leverandøren har åpne saker. Fjerne likevel?")) return; sups.splice(i,1); draw(); });
+    document.getElementById("add").onclick=()=>{ sync(); sups.push({id:"lev"+Date.now().toString(36),n:"Ny leverandør",cats:[],ramme:10000,auto:false}); draw(); };
+    document.getElementById("sv").onclick=async()=>{ sync(); const n=C.clone(SET); n.suppliers=sups.filter(s=>s.n);
+      n.autoroute=document.getElementById("ar").checked; n.municipality=document.getElementById("mn").value.trim()||n.municipality;
+      SET=await S.saveSettings(n); document.getElementById("muni").textContent=SET.municipality; toast("Lagret"); };
+  };
+  draw();
+}
+
+/* ---------------- Oppstart ---------------- */
+(async()=>{
+  await S.init();
+  ME=await S.me();
+  if(!ME||!(ME.roles||[]).includes("kommune")){ $v.innerHTML=`<div class="empty">${ic("lock")} Du har ikke tilgang. <a href="/.auth/login/aad?post_login_redirect_uri=/admin/">Logg inn</a></div>`; return; }
+  document.getElementById("user").innerHTML=(S.mode==="local"?'<span class="demo">DEMOMODUS</span>':"")+`<span>${esc(ME.name)}</span>`+
+    (S.mode==="api"?`<a href="/.auth/logout?post_logout_redirect_uri=/admin/">${ic("logout")} Logg ut</a>`:"");
+  try{ await reload(); }catch(e){ $v.innerHTML=`<div class="empty">Kunne ikke laste data: ${esc(e.message)}</div>`; return; }
+  document.getElementById("muni").textContent=SET.municipality;
+  setInterval(async()=>{ if(page==="saker"&&!document.querySelector("#panel textarea:focus,#panel input:focus")){ try{ ALL=await S.listAll(); renderSide(); }catch(e){} } },30000);
+})();
+</script>
+</body>
+</html>

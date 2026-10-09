@@ -1,0 +1,11 @@
+{
+  "name": "meldinn-api",
+  "version": "1.0.0",
+  "description": "MeldInn API – Azure Functions (Node, v4)",
+  "main": "src/functions/*.js",
+  "dependencies": {
+    "@azure/data-tables": "^13.3.0",
+    "@azure/functions": "^4.6.0",
+    "@azure/storage-blob": "^12.26.0"
+  }
+}

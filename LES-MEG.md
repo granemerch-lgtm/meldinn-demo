@@ -1,56 +1,67 @@
-# MeldInn – demo (PWA)
+# MeldInn v2 – innbygger-app + kommuneportal
 
-Installerbar webapp: innbygger melder inn, kommunen behandler, leverandøren ferdigmelder.
-Alt ligger i én kodebase som kan kjøres på eget domene **og** pakkes for App Store / Google Play.
+| Adresse | Hvem | Innhold |
+|---|---|---|
+| `https://demo.2727.no/` | Innbyggere (ingen innlogging) | Meld inn, kart, mine saker |
+| `https://demo.2727.no/admin/` | Kommune (Microsoft-innlogging + rollen `kommune`) | Saksliste, status, fordeling, kart, innbyggervisning, leverandører |
 
-## Innhold
-| Fil | Formål |
+Uten database kjører begge sider i **demomodus** (lagres i nettleseren). Når databasen er koblet til, deler appen og portalen de samme dataene.
+
+## Mappestruktur (alt i roten av GitHub-repoet)
+```
+index.html                 Innbygger-app
+admin/index.html           Kommuneportal
+shared/                    Felles logikk, ikoner, datalag
+api/                       Server (Azure Functions) – lagrer i Azure Storage
+icons/                     App-ikoner
+staticwebapp.config.json   Tilgangsstyring /admin og /api/manage
+sw.js, manifest.webmanifest, ingen-tilgang.html
+```
+NB: `shared/meldinn-core.js` og `api/src/lib/meldinn-core.js` skal være like.
+
+## Oppsett – trinn for trinn
+
+### 1. Last opp filene til GitHub
+1. Slett gamle filer i repoet (behold mappen `.github`).
+2. **Add file → Upload files** → dra inn alt innholdet fra zip-filen (mapper inkludert) → **Commit**.
+
+### 2. Slå på API-et i GitHub-workflowen
+1. Åpne `.github/workflows/azure-static-web-apps-<navn>.yml` → ✏️.
+2. Endre `api_location: ""` til `api_location: "api"`.
+3. **Commit**. Følg med under **Actions** til den er grønn.
+
+### 3. Opprett lagring i Azure
+1. Azure-portalen → **Storage accounts → Create**.
+   - Resource group: `rg-meldinn` · Navn: f.eks. `meldinnstorage` · Region: Norway East · Redundancy: **LRS**.
+2. **Review + create → Create**.
+3. Åpne kontoen → **Security + networking → Access keys** → kopier **Connection string** (key1).
+
+### 4. Koble lagringen til appen
+1. Static Web App `meldinn-demo` → **Settings → Environment variables** → **Production** → **+ Add**.
+2. Name: `STORAGE_CONNECTION` · Value: connection string fra trinn 3 → **Apply**.
+3. Tabeller og bildemappe opprettes automatisk ved første bruk.
+
+### 5. Gi kommunebrukere tilgang
+1. Static Web App → **Settings → Role management** → **+ Invite**.
+2. Authorization provider: **Microsoft Entra ID** · Invitee details: brukerens e-post · Domain: `demo.2727.no` · Role: **kommune** · Expiration: f.eks. 168 timer.
+3. **Generate** → send lenken til brukeren. Brukeren åpner lenken og logger inn én gang.
+4. Fjern tilgang: samme sted → velg bruker → **Delete**.
+
+### 6. Test
+1. Åpne `https://demo.2727.no/admin/` → logg inn → trykk **Last inn demodata** nederst til venstre.
+2. Meld inn en sak fra mobilen på `https://demo.2727.no/` → den dukker opp i portalen (oppdateres hvert 30. sek, eller trykk **Oppdater**).
+3. Toppen av portalen skal **ikke** vise «DEMOMODUS». Gjør den det, sjekk trinn 2 og 4.
+
+## Feilsøking
+| Symptom | Løsning |
 |---|---|
-| index.html | Hele appen (HTML/CSS/JS) |
-| manifest.webmanifest | Gjør appen installerbar (navn, farger, ikoner) |
-| sw.js | Service worker – rask oppstart og offline-skall |
-| icons/ | App-ikoner (192, 512, maskable, 1024 for butikkene) |
-| capacitor.config.json | Klar for innpakking til iOS/Android |
+| «DEMOMODUS» vises etter publisering | `api_location` er ikke satt til `"api"`, eller Actions feilet |
+| Feilmelding om `STORAGE_CONNECTION` | Variabelen mangler eller er feil (trinn 4) |
+| «Ingen tilgang» etter innlogging | Brukeren har ikke akseptert invitasjonen / mangler rollen `kommune` |
+| Gammel versjon på mobil | Øk `CACHE`-versjonen i `sw.js` |
 
-## Demo-roller (velg øverst til høyre)
-1. **Innbygger:** Meld inn → kategori → bilde → bekreft sted (GPS) → send. Duplikatsjekk innen 120 m. Følg saker.
-2. **Kommune:** Oversikt med KPI-er og kart, prioritering, tildeling til leverandør, godkjenning, automatisk ruting (Oppsett).
-3. **Leverandør:** Oppdragsliste, veibeskrivelse, ferdigmelding med bilde, kostnad og fullmaktskontroll.
-
-Data lagres lokalt i nettleseren (localStorage). «Oppsett → Nullstill demodata» starter på nytt.
-
-## Alternativ A – nettsidebasert på eget domene (raskest)
-1. Last opp hele mappen til en statisk webhost med **HTTPS** (påkrevd for kamera, GPS og installasjon).
-   Eksempler: Azure Static Web Apps, Netlify, Cloudflare Pages, GitHub Pages eller eget webhotell.
-2. Pek f.eks. `demo.meldinn.no` (CNAME) mot hosten.
-3. Åpne på mobil:
-   - **Android/Chrome:** «Installer»-knapp vises i appen.
-   - **iPhone/Safari:** Del → «Legg til på Hjem-skjerm».
-
-## Alternativ B – App Store og Google Play
-**Enklest: PWABuilder (Microsoft, gratis)**
-1. Publiser først som i alternativ A.
-2. Gå til pwabuilder.com, lim inn URL-en → «Package for stores».
-3. Last ned Android-pakke (.aab) → last opp i Google Play Console.
-4. Last ned iOS-pakke (Xcode-prosjekt) → bygg på Mac → last opp via App Store Connect.
-
-**Alternativ: Capacitor (mer kontroll, native kamera/GPS/push)**
-```
-npm init -y
-npm i @capacitor/core @capacitor/cli @capacitor/android @capacitor/ios
-mkdir www && cp -r index.html manifest.webmanifest sw.js icons www/
-npx cap add android && npx cap add ios
-npx cap open android   # bygg i Android Studio
-npx cap open ios       # bygg i Xcode (krever Mac)
-```
-
-**Kontoer som trengs:** Google Play Console (engangsavgift) og Apple Developer Program (årlig avgift).
-Apple avviser apper som bare er en «innpakket nettside» – før innsending bør dere legge til
-native funksjoner som push-varsler og native kamera/posisjon (Capacitor-plugins).
-
-## Fra demo til pilot (neste steg)
-- Backend og database (f.eks. Azure Functions + Azure SQL/Cosmos DB, eller Supabase)
-- Innlogging for kommune og leverandør (Entra ID / BankID); innbygger forblir uten konto
-- Varsling på SMS/e-post/push
-- Personvern: DPIA, databehandleravtale, sletting av bilder etter X dager, sladding av ansikter/skilt
-- Integrasjon mot kommunens fagsystem/kartdata
+## Før reell bruk (pilot)
+- Personvern: DPIA og databehandleravtale. Bilder kan inneholde personopplysninger.
+- Sletterutine for gamle saker og bilder.
+- Varsling på e-post/SMS til innbygger (kontaktfeltet lagres, men sendes ikke ennå).
+- Egen leverandørportal (roller `leverandor`) kan legges til på samme måte som `/admin`.
