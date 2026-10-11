@@ -1,5 +1,5 @@
 /* MeldInn service worker. Øk versjonen ved hver endring av appen. */
-const CACHE = "meldinn-v5";
+const CACHE = "meldinn-v6";
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/shared/meldinn-core.js", "/shared/icons.js", "/shared/store.js",
   "/icons/icon-192.png", "/icons/icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
