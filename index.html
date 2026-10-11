@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MeldInn – meld fra om feil</title>
-<meta name="description" content="Meld inn ødelagte gatelys, hull i veien, søppel og mer. Ta bilde, bekreft sted, send.">
+<meta name="description" content="Meld fra om feil og mangler til kommunen, borettslaget eller bedriften. Ta bilde, bekreft sted, send.">
 <meta name="theme-color" content="#0F626B">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
@@ -29,15 +29,19 @@ html,body{margin:0;height:100%;background:var(--offwhite);color:var(--marine);
 button{font:inherit;cursor:pointer}
 svg.i{width:1em;height:1em;vertical-align:-0.15em;flex-shrink:0}
 #app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
-header{background:var(--petrol);color:var(--white);padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;
+header{background:var(--petrol);color:var(--white);padding:calc(env(safe-area-inset-top) + 10px) 12px 10px 16px;
   display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:1000}
 header img{width:34px;height:34px;border-radius:9px}
 header h1{font-size:20px;margin:0;flex:1;letter-spacing:.3px}
-header .muni{font-size:13px;opacity:.85}
 .back{background:none;border:none;color:var(--white);font-size:26px;padding:0 6px 0 0;line-height:1;display:flex}
+.tpick{display:flex;align-items:center;gap:6px;max-width:58%;background:var(--marine);color:var(--white);border:1px solid #ffffff40;
+  border-radius:12px;padding:7px 10px;font-size:14px;font-weight:600}
+.tpick span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tpick svg.i{font-size:17px}
 main{flex:1;padding:16px 16px calc(90px + env(safe-area-inset-bottom))}
 nav.tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--white);
   border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:1000}
+nav.tabs:empty{display:none}
 nav.tabs button{flex:1;background:none;border:none;padding:10px 4px 12px;color:var(--marine-muted);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
 nav.tabs button.active{color:var(--petrol);font-weight:700}
 nav.tabs svg{width:24px;height:24px}
@@ -52,13 +56,16 @@ nav.tabs svg{width:24px;height:24px}
 .btn.secondary{background:var(--white);color:var(--petrol);border:2px solid var(--petrol)}
 .btn.orange{background:var(--orange)}
 .btn.small{width:auto;padding:9px 14px;font-size:15px;border-radius:11px}
+.btn:disabled{opacity:.5}
 .row{display:flex;gap:10px}.row>*{flex:1}
 h2{font-size:22px;margin:4px 0 12px;color:var(--petrol);display:flex;align-items:center;gap:8px}
-h3{font-size:17px;margin:0 0 8px;color:var(--petrol)}
+h3{font-size:17px;margin:0 0 8px;color:var(--petrol);display:flex;align-items:center;gap:8px}
 p.lead{color:var(--marine-muted);margin:0 0 16px}
+.to{display:flex;align-items:center;gap:8px;background:var(--petrol-light);color:var(--petrol);border-radius:12px;padding:10px 12px;margin-bottom:14px;font-size:15px;font-weight:600}
+.to button{margin-left:auto;background:none;border:none;color:var(--petrol);text-decoration:underline;font-size:14px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .tile{background:var(--white);border:2px solid transparent;border-radius:18px;padding:18px 10px;text-align:center;font-weight:600;
-  font-size:17px;color:var(--marine);box-shadow:0 1px 3px #18364A14}
+  font-size:16px;color:var(--marine);box-shadow:0 1px 3px #18364A14}
 .tile .ic{font-size:36px;display:flex;justify-content:center;margin-bottom:8px;color:var(--petrol)}
 .tile.sel{border-color:var(--orange);background:var(--orange-light)}
 .steps{display:flex;gap:6px;margin-bottom:16px}
@@ -70,7 +77,7 @@ p.lead{color:var(--marine-muted);margin:0 0 16px}
 .photo-drop{border:3px dashed var(--orange-line);border-radius:var(--radius);padding:40px 16px;text-align:center;color:var(--orange);
   background:var(--orange-light);font-weight:700;margin-bottom:12px;display:block}
 .photo-drop .ic{font-size:52px;display:flex;justify-content:center;margin-bottom:6px}
-textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;background:var(--white);color:var(--marine)}
+textarea,input[type=text],input[type=search]{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;background:var(--white);color:var(--marine)}
 textarea:focus,input:focus{outline:2px solid var(--petrol);border-color:var(--petrol)}
 textarea{min-height:90px;resize:vertical}
 label.l{display:block;font-weight:600;margin:12px 0 6px;font-size:15px}
@@ -80,6 +87,10 @@ label.l{display:block;font-weight:600;margin:12px 0 6px;font-size:15px}
 .list-item .meta{flex:1;min-width:0}
 .list-item .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .list-item .s{font-size:14px;color:var(--marine-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-item.on{box-shadow:inset 0 0 0 2px var(--orange)}
+.tenant .thumb{background:var(--petrol);color:var(--white)}
+.tenant.on .thumb{background:var(--orange)}
+.tenant .rm{background:none;border:none;color:var(--marine-muted);font-size:20px;display:flex;padding:6px}
 .badge{display:inline-block;font-size:12px;font-weight:700;padding:4px 9px;border-radius:20px;color:var(--white);white-space:nowrap}
 .st-Mottatt{background:var(--marine-muted)}.st-Under{background:var(--marine)}.st-Tildelt{background:var(--petrol)}
 .st-Utført{background:var(--orange)}.st-Løst{background:var(--white);color:var(--petrol);box-shadow:inset 0 0 0 2px var(--petrol)}
@@ -105,6 +116,19 @@ label.l{display:block;font-weight:600;margin:12px 0 6px;font-size:15px}
 .iconline{display:flex;align-items:center;gap:6px}
 .demo{display:inline-block;background:var(--orange-light);color:var(--err);border-radius:8px;padding:2px 8px;font-size:12px;font-weight:700}
 .loading{text-align:center;color:var(--marine-muted);padding:40px 0}
+.grp{font-size:13px;font-weight:700;color:var(--marine-muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px}
+/* Kodefelt */
+.codebox{background:var(--white);border:2px dashed var(--orange-line);border-radius:var(--radius);padding:14px;margin-top:16px}
+.codebox h3{color:var(--marine)}
+.codebox .cr{display:flex;gap:8px}
+.codebox input{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:20px;letter-spacing:2px;text-transform:uppercase;text-align:center}
+.codebox .btn{width:auto;flex-shrink:0}
+.codebox .err{color:var(--err);font-size:14px;margin-top:6px;min-height:1em}
+.sheet-bg{position:fixed;inset:0;background:#18364A88;z-index:2000;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--offwhite);width:100%;max-width:520px;max-height:88vh;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));overflow:auto}
+.sheet .hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sheet .hd h2{margin:0;flex:1}
+.sheet .x{background:none;border:none;font-size:22px;color:var(--marine-muted);display:flex}
 .leaflet-container{font:inherit}
 .pin{width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid var(--white);box-shadow:0 2px 6px #0005;display:flex;align-items:center;justify-content:center}
 .pin i{transform:rotate(45deg);font-style:normal;font-size:15px;color:var(--white);display:flex}
@@ -116,28 +140,30 @@ label.l{display:block;font-weight:600;margin:12px 0 6px;font-size:15px}
     <button class="back" id="backBtn" style="display:none" aria-label="Tilbake"></button>
     <img src="icons/icon-192.png" alt="">
     <h1>MeldInn</h1>
-    <span class="muni" id="muni"></span>
+    <button class="tpick" id="tpick" aria-label="Velg hvem du melder til" style="display:none"></button>
   </header>
   <main id="view"><div class="loading">Laster…</div></main>
   <nav class="tabs" id="tabs"></nav>
 </div>
 
 <script>
-const C=MeldInnCore, S=MeldInnStore, ic=MeldInnIcon, cic=MeldInnCatIcon;
+const C=MeldInnCore, S=MeldInnStore, ic=MeldInnIcon, cic=MeldInnCatIcon, tic=MeldInnTypeIcon;
 const STATUS_COLORS={"Mottatt":"#5A6B78","Under behandling":"#18364A","Tildelt":"#0F626B","Utført":"#F97821","Løst":"#0F626B"};
-const MYKEY="meldinn_mine_v1";
-let CFG=null, VIS=null;
+const MYKEY="meldinn_mine_v1", TKEY="meldinn_tenant", JKEY="meldinn_orgs";
+let KOMMUNER=[], JOINED=[], T=null, VIS=null;
 
-const $view=document.getElementById("view"), $tabs=document.getElementById("tabs"), $back=document.getElementById("backBtn");
+const $view=document.getElementById("view"), $tabs=document.getElementById("tabs"), $back=document.getElementById("backBtn"), $tp=document.getElementById("tpick");
 $back.innerHTML=ic("chevronLeft",2.5);
 let stack=[], maps=[], curTab=null, curArg=null, draft=null;
 
-function mine(){ try{return JSON.parse(localStorage.getItem(MYKEY))||[]}catch(e){return []} }
+const lget=(k,d)=>{ try{ const v=JSON.parse(localStorage.getItem(k)); return v==null?d:v; }catch(e){ return d; } };
+function mine(){ return lget(MYKEY,[]); }
 function addMine(id){ const m=mine(); if(!m.includes(id)){m.push(id);localStorage.setItem(MYKEY,JSON.stringify(m));} }
+function saveJoined(){ localStorage.setItem(JKEY,JSON.stringify(JOINED)); }
 function fmt(iso){ const d=new Date(iso); return d.toLocaleDateString("no-NO",{day:"numeric",month:"short"})+" "+d.toLocaleTimeString("no-NO",{hour:"2-digit",minute:"2-digit"}); }
 function esc(s){ return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 function badge(s){ return `<span class="badge st-${s.split(" ")[0]}">${s}</span>`; }
-function title(c){ return c.desc || C.CATS[c.cat]; }
+function title(c){ return c.desc || c.catName; }
 function toast(msg,icon){ const t=document.createElement("div"); t.className="toast"; t.innerHTML=(icon?ic(icon):"")+`<span>${esc(msg)}</span>`; document.body.appendChild(t); setTimeout(()=>t.remove(),3200); }
 function clearMaps(){ maps.forEach(m=>{try{m.remove()}catch(e){}}); maps=[]; }
 function pinIcon(c){ return L.divIcon({className:"",html:`<div class="pin" style="background:${STATUS_COLORS[c.status]||"#0F626B"}"><i>${cic(c.cat)}</i></div>`,iconSize:[32,32],iconAnchor:[16,32],popupAnchor:[0,-30]}); }
@@ -147,12 +173,74 @@ function makeMap(el,center,zoom){
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(m);
   maps.push(m); setTimeout(()=>m.invalidateSize(),60); return m;
 }
+
+/* ---------- Mottakere: kommuner (åpne) + organisasjoner (lagt til med kode) ---------- */
+const allTenants=()=>[...KOMMUNER,...JOINED];
+function setTenant(id){
+  T=allTenants().find(t=>t.id===id)||null; VIS=T&&T.visibility;
+  if(T){ localStorage.setItem(TKEY,T.id); $tp.style.display="flex"; $tp.innerHTML=`${tic(T.type)}<span>${esc(T.name)}</span>${ic("chevronDown")}`; }
+  else { localStorage.removeItem(TKEY); $tp.style.display="none"; }
+}
+function tRow(t,removable){
+  const on=T&&T.id===t.id;
+  return `<div class="list-item tenant ${on?"on":""}" data-t="${t.id}" role="button" tabindex="0"><div class="thumb">${tic(t.type)}</div><div class="meta"><div class="t">${esc(t.name)}</div><div class="s">${t.type==="kommune"?"Kommune":esc(C.TYPES[t.type])}</div></div>${on?`<span style="color:var(--orange);font-size:22px;display:flex">${ic("checkCircle")}</span>`:""}${removable?`<button class="rm" data-rm="${t.id}" title="Fjern ${esc(t.name)}" aria-label="Fjern">${ic("x")}</button>`:""}</div>`;
+}
+function pickerBody(filter){
+  const f=(filter||"").toLowerCase();
+  const k=KOMMUNER.filter(t=>!f||t.name.toLowerCase().includes(f));
+  return (JOINED.length?`<div class="grp">Mine organisasjoner</div>${JOINED.map(t=>tRow(t,true)).join("")}`:"")+
+    `<div class="grp">Kommuner</div>${k.map(t=>tRow(t,false)).join("")||'<p class="muted">Ingen kommuner med dette navnet.</p>'}`;
+}
+function codeBox(){
+  return `<div class="codebox"><h3>${ic("ticket")} Borettslag, sameie eller bedrift?</h3>
+    <p class="muted" style="margin:0 0 10px">Legg til med koden du har fått, f.eks. på et oppslag i oppgangen.</p>
+    <div class="cr"><input type="text" class="cin" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="11" placeholder="XXX-XXX-XXX" aria-label="Kode">
+    <button class="btn orange cgo">Legg til</button></div><div class="err"></div></div>`;
+}
+async function joinWithCode(code,onDone){
+  const n=C.normCode(code); if(!n) throw new Error("Koden må ha formatet XXX-XXX-XXX");
+  const info=await S.join(n);
+  const t=Object.assign({},info,{code:n});
+  JOINED=JOINED.filter(x=>x.id!==t.id).concat(t); saveJoined();
+  setTenant(t.id); toast("Lagt til: "+t.name,"check"); onDone&&onDone(); return t;
+}
+function bindPicker(root,onPick){
+  root.querySelectorAll("[data-t]").forEach(b=>b.onclick=e=>{ if(e.target.closest("[data-rm]")) return; setTenant(b.dataset.t); onPick(); });
+  root.querySelectorAll("[data-rm]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const t=JOINED.find(x=>x.id===b.dataset.rm);
+    if(!confirm(`Fjerne ${t.name} fra appen? Du kan legge den til igjen med koden.`)) return;
+    JOINED=JOINED.filter(x=>x.id!==t.id); saveJoined(); if(T&&T.id===t.id) setTenant(null); (root._refresh||(()=>{}))(); });
+  const box=root.querySelector(".codebox"); if(!box) return;
+  const inp=box.querySelector(".cin"), err=box.querySelector(".err"), go=box.querySelector(".cgo");
+  inp.oninput=()=>{ const p=inp.selectionStart, before=inp.value.length; inp.value=C.formatCodeInput(inp.value); const d=inp.value.length-before; try{inp.setSelectionRange(p+d,p+d);}catch(e){} err.textContent=""; };
+  const submit=async()=>{ go.disabled=true; err.textContent="";
+    try{ await joinWithCode(inp.value,onPick); }catch(e){ err.textContent=e.status===404?"Fant ingen organisasjon med denne koden.":e.message; }
+    go.disabled=false; };
+  go.onclick=submit; inp.onkeydown=e=>{ if(e.key==="Enter") submit(); };
+}
+function openPicker(){
+  const bg=document.createElement("div"); bg.className="sheet-bg";
+  const draw=(f)=>{ bg.querySelector("#tl").innerHTML=pickerBody(f); bindPicker(bg,done); };
+  bg.innerHTML=`<div class="sheet" role="dialog" aria-label="Velg mottaker"><div class="hd"><h2>Hvem vil du melde til?</h2><button class="x" aria-label="Lukk">${ic("x")}</button></div>
+    <input type="search" id="tq" placeholder="Søk etter kommune"><div id="tl"></div>${codeBox()}</div>`;
+  document.body.appendChild(bg);
+  const close=()=>{ bg.remove(); if(!T&&curTab!=="velg"){ stack=[]; go("velg"); } };
+  function done(){ close(); draft=null; stack=[]; go(T?"home":"velg"); if(T) toast("Du melder nå til "+T.name,"check"); }
+  bg.onclick=e=>{ if(e.target===bg) close(); };
+  bg.querySelector(".x").onclick=close;
+  bg._refresh=()=>draw(bg.querySelector("#tq").value);
+  bg.querySelector("#tq").oninput=e=>draw(e.target.value);
+  draw(""); bindPicker(bg,done);
+}
+$tp.onclick=openPicker;
+
+/* ---------- Navigasjon ---------- */
 const TABS=[["home","Meld inn","home"],["kart","Kart","mapPin"],["mine","Mine saker","list"]];
 function renderTabs(){
-  $tabs.innerHTML=TABS.map(([k,l,i])=>`<button data-k="${k}" class="${k===curTab?"active":""}">${ic(i)}<span>${l}</span></button>`).join("");
+  $tabs.innerHTML=T?TABS.map(([k,l,i])=>`<button data-k="${k}" class="${k===curTab?"active":""}">${ic(i)}<span>${l}</span></button>`).join(""):"";
   $tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>{stack=[];go(b.dataset.k)});
 }
 async function go(tab,arg,push){
+  if(!T&&tab!=="velg") tab="velg";
   if(push) stack.push([curTab,curArg]);
   clearMaps(); curTab=tab; curArg=arg; renderTabs();
   $back.style.display=stack.length?"flex":"none"; window.scrollTo(0,0);
@@ -160,15 +248,25 @@ async function go(tab,arg,push){
   catch(e){ $view.innerHTML=`<div class="notice">Noe gikk galt: ${esc(e.message)}</div>`; }
 }
 $back.onclick=()=>{ const p=stack.pop(); if(p) go(p[0],p[1]); };
-function item(c){
+function item(c,showOrg){
   return `<button class="list-item" data-id="${c.id}"><div class="thumb">${c.hasPhoto?`<img src="${S.photoUrl(c.id,"before")}" alt="">`:cic(c.cat)}</div>
-    <div class="meta"><div class="t">${esc(title(c))}</div><div class="s">${c.id} · ${C.CATS[c.cat]} · ${fmt(c.created)}</div></div>${badge(c.status)}</button>`;
+    <div class="meta"><div class="t">${esc(title(c))}</div><div class="s">${c.id} · ${showOrg?esc(c.tenantName):esc(c.catName)} · ${fmt(c.created)}</div></div>${badge(c.status)}</button>`;
 }
 function bindItems(){ $view.querySelectorAll(".list-item[data-id]").forEach(b=>b.onclick=()=>go("sak",b.dataset.id,true)); }
 
 const VIEWS={};
+VIEWS.velg=()=>{
+  $view.innerHTML=`<h2>Velkommen til MeldInn</h2><p class="lead">Velg kommunen du vil melde fra til. Du kan bytte når som helst øverst til høyre.</p>
+    <input type="search" id="tq" placeholder="Søk etter kommune"><div id="tl">${pickerBody()}</div>${codeBox()}
+    <p class="muted" style="text-align:center;margin-top:18px">${S.mode==="local"?'<span class="demo">Demomodus – lagres kun på denne enheten</span>':""}</p>`;
+  const done=()=>go("home");
+  const draw=f=>{ document.getElementById("tl").innerHTML=pickerBody(f); bindPicker($view,done); };
+  $view._refresh=()=>{ renderTabs(); draw(document.getElementById("tq").value); };
+  document.getElementById("tq").oninput=e=>draw(e.target.value);
+  bindPicker($view,done);
+};
 VIEWS.home=async()=>{
-  const list=VIS.showOthers?await S.listPublic():[];
+  const list=VIS.showOthers?await S.listPublic(T.id,null,T.code):[];
   const open=list.filter(c=>c.status!=="Løst").length, solved=list.filter(c=>c.status==="Løst").length;
   $view.innerHTML=`
     <div class="card install" id="installCard"><b>Installer MeldInn</b><p class="muted" style="margin:4px 0 10px">Legg appen på hjemskjermen – ingen App Store nødvendig.</p><button class="btn small" id="installBtn">${ic("download")} Installer</button></div>
@@ -183,20 +281,21 @@ VIEWS.home=async()=>{
     ${VIS.showOthers?`<div style="height:16px"></div><div class="card"><div class="row" style="text-align:center">
       <div><b style="font-size:26px;color:var(--petrol)">${open}</b><div class="muted">åpne saker</div></div>
       <div><b style="font-size:26px;color:var(--marine)">${solved}</b><div class="muted">nylig fikset</div></div>
-      <div><b style="font-size:26px;color:var(--orange)">${list.filter(c=>Date.now()-Date.parse(c.created)<7*864e5).length}</b><div class="muted">Meldt siste 7 dager</div></div>
+      <div><b style="font-size:26px;color:var(--orange)">${list.filter(c=>Date.now()-Date.parse(c.created)<7*864e5).length}</b><div class="muted">meldt siste 7 dager</div></div>
     </div></div>`:""}
-    <p class="muted" style="text-align:center">${esc(CFG.municipality)}${S.mode==="local"?' · <span class="demo">Demomodus – lagres kun på denne enheten</span>':""}</p>`;
+    <p class="muted" style="text-align:center">Du melder til <b>${esc(T.name)}</b>${S.mode==="local"?'<br><span class="demo">Demomodus – lagres kun på denne enheten</span>':""}</p>`;
   document.getElementById("startBtn").onclick=()=>{ draft={cat:null,photo:null,lat:null,lng:null,desc:"",contact:""}; go("m1",null,true); };
   if(deferredPrompt) showInstall();
 };
 function steps(n){ return `<div class="steps">${[1,2,3,4].map(i=>`<span class="${i<=n?"on":""}"></span>`).join("")}</div>`; }
+const toLine=()=>`<div class="to">${tic(T.type)} Til: ${esc(T.name)}<button onclick="openPicker()">Bytt</button></div>`;
 VIEWS.m1=()=>{
-  $view.innerHTML=`${steps(1)}<h2>Hva gjelder det?</h2><div class="grid">${
-    Object.entries(C.CATS).map(([k,n])=>`<button class="tile ${draft.cat===k?"sel":""}" data-k="${k}"><span class="ic">${cic(k)}</span>${n}</button>`).join("")}</div>`;
+  $view.innerHTML=`${steps(1)}${toLine()}<h2>Hva gjelder det?</h2><div class="grid">${
+    T.cats.map(c=>`<button class="tile ${draft.cat===c.id?"sel":""}" data-k="${c.id}"><span class="ic">${cic(c.id)}</span>${esc(c.n)}</button>`).join("")}</div>`;
   $view.querySelectorAll(".tile").forEach(b=>b.onclick=()=>{draft.cat=b.dataset.k; go("m2",null,true);});
 };
 VIEWS.m2=()=>{
-  $view.innerHTML=`${steps(2)}<h2>Ta et bilde</h2><p class="lead">Et bilde hjelper oss å forstå problemet raskere. Unngå å ta bilde av personer og bilskilt.</p>
+  $view.innerHTML=`${steps(2)}<h2>Ta et bilde</h2><p class="lead">Et bilde hjelper å forstå problemet raskere. Unngå å ta bilde av personer og bilskilt.</p>
     <input type="file" id="cam" accept="image/*" capture="environment" hidden>
     ${draft.photo?`<img class="photo-prev" src="${draft.photo}">`:`<label for="cam" class="photo-drop"><span class="ic">${ic("camera",1.75)}</span>Trykk for å ta bilde</label>`}
     ${draft.photo?`<button class="btn secondary" id="retake">${ic("camera")} Ta nytt bilde</button><div style="height:10px"></div><button class="btn orange" id="next">Neste</button>`
@@ -210,14 +309,13 @@ VIEWS.m2=()=>{
 function shrink(file,max){ return new Promise(res=>{ const r=new FileReader(); r.onload=()=>{ const img=new Image(); img.onload=()=>{
   const s=Math.min(1,max/Math.max(img.width,img.height)); const cv=document.createElement("canvas"); cv.width=Math.round(img.width*s); cv.height=Math.round(img.height*s);
   cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height); res(cv.toDataURL("image/jpeg",0.72)); }; img.src=r.result; }; r.readAsDataURL(file); }); }
-
 VIEWS.m3=async()=>{
   $view.innerHTML=`${steps(3)}<h2>Bekreft stedet</h2><p class="lead">Dra nålen til riktig sted om nødvendig.</p>
     <div id="pickmap"></div><div id="dupBox"></div>
     <button class="btn secondary" id="gps">${ic("locate")} Bruk min posisjon</button><div style="height:10px"></div>
     <button class="btn orange" id="next">${ic("check")} Stedet stemmer</button>`;
-  const nearby=VIS.showOthers?await S.listPublic().catch(()=>[]):[];
-  const start=draft.lat?[draft.lat,draft.lng]:CFG.center;
+  const nearby=VIS.showOthers?await S.listPublic(T.id,null,T.code).catch(()=>[]):[];
+  const start=draft.lat?[draft.lat,draft.lng]:T.center;
   const m=makeMap("pickmap",start,16); if(!m){ draft.lat=start[0]; draft.lng=start[1]; }
   let mk=null;
   const checkDup=()=>{
@@ -234,23 +332,24 @@ VIEWS.m3=async()=>{
     navigator.geolocation.getCurrentPosition(p=>{ setPos(p.coords.latitude,p.coords.longitude); m&&m.setView([p.coords.latitude,p.coords.longitude],17); },
       ()=>toast("Fikk ikke posisjon – dra nålen manuelt","info"),{enableHighAccuracy:true,timeout:8000}); };
   document.getElementById("gps").onclick=locate;
-  if(!draft.lat||draft.lat===CFG.center[0]) locate();
+  if(!draft.lat||draft.lat===T.center[0]) locate();
   document.getElementById("next").onclick=()=>go("m4",null,true);
 };
 VIEWS.m4=()=>{
-  $view.innerHTML=`${steps(4)}<h2>Noe mer vi bør vite?</h2>
-    <div class="card"><div class="catrow"><div class="cic">${cic(draft.cat)}</div><div style="flex:1"><b>${C.CATS[draft.cat]}</b><div class="muted">${draft.lat.toFixed(4)}, ${draft.lng.toFixed(4)}</div></div>
+  const cat=T.cats.find(c=>c.id===draft.cat)||{n:draft.cat};
+  $view.innerHTML=`${steps(4)}${toLine()}<h2>Noe mer vi bør vite?</h2>
+    <div class="card"><div class="catrow"><div class="cic">${cic(draft.cat)}</div><div style="flex:1"><b>${esc(cat.n)}</b><div class="muted">${draft.lat.toFixed(4)}, ${draft.lng.toFixed(4)}</div></div>
     ${draft.photo?`<img src="${draft.photo}" style="width:64px;height:64px;object-fit:cover;border-radius:10px">`:""}</div></div>
-    <label class="l">Kort beskrivelse (valgfritt)</label><textarea id="desc" maxlength="500" placeholder="F.eks. «Lyset har vært ute i en uke»">${esc(draft.desc)}</textarea>
+    <label class="l">Kort beskrivelse (valgfritt)</label><textarea id="desc" maxlength="500" placeholder="F.eks. «Har vært slik i en uke»">${esc(draft.desc)}</textarea>
     <label class="l">Vil du få beskjed når det er fikset? (valgfritt)</label><input type="text" id="contact" maxlength="120" placeholder="E-post eller mobilnummer" value="${esc(draft.contact)}">
-    <p class="muted">Kontaktinfo vises bare for kommunen.</p>
+    <p class="muted">Kontaktinfo vises bare for mottakeren.</p>
     <button class="big-btn" id="send">${ic("send")} Send inn</button>`;
   const btn=document.getElementById("send");
   btn.onclick=async()=>{
     btn.disabled=true;
     draft.desc=document.getElementById("desc").value.trim(); draft.contact=document.getElementById("contact").value.trim();
     try{
-      const c=await S.create({cat:draft.cat,lat:draft.lat,lng:draft.lng,desc:draft.desc,contact:draft.contact,photo:draft.photo});
+      const c=await S.create({tenant:T.id,code:T.code||"",cat:draft.cat,lat:draft.lat,lng:draft.lng,desc:draft.desc,contact:draft.contact,photo:draft.photo});
       addMine(c.id); draft=null; stack=[]; go("kvittering",c.id);
     }catch(e){ btn.disabled=false; toast("Kunne ikke sende: "+e.message,"info"); }
   };
@@ -258,39 +357,39 @@ VIEWS.m4=()=>{
 VIEWS.kvittering=(id)=>{
   $view.innerHTML=`<div class="success"><div class="ic">${ic("checkCircle",1.75)}</div><h2 style="justify-content:center">Takk! Meldingen er sendt</h2>
     <div class="muted">Saksnummer</div><div class="nr">${esc(id)}</div>
-    <p class="lead">Saken er sendt til ${esc(CFG.municipality)}. Du finner den under «Mine saker».</p>
+    <p class="lead">Saken er sendt til ${esc(T.name)}. Du finner den under «Mine saker».</p>
     <button class="btn" onclick="go('sak','${esc(id)}')">${ic("bell")} Følg saken</button><div style="height:10px"></div>
     <button class="btn secondary" onclick="go('home')">${ic("home")} Til forsiden</button></div>`;
 };
 VIEWS.mine=async()=>{
-  const ids=mine(); const list=ids.length?await S.listPublic(ids):[];
+  const ids=mine(); const list=ids.length?await S.listPublic(null,ids):[];
   list.sort((a,b)=>b.created.localeCompare(a.created));
-  $view.innerHTML=`<h2>Mine saker</h2>${list.length?list.map(item).join(""):`<div class="card"><p class="muted" style="margin:0">Du har ikke meldt inn eller fulgt noen saker ennå.</p></div>`}`;
+  $view.innerHTML=`<h2>Mine saker</h2><p class="muted" style="margin-top:-6px">Alle saker du har meldt inn eller følger – uansett mottaker.</p>${list.length?list.map(c=>item(c,true)).join(""):`<div class="card"><p class="muted" style="margin:0">Du har ikke meldt inn eller fulgt noen saker ennå.</p></div>`}`;
   bindItems();
 };
 VIEWS.sak=async(id)=>{
   const c=await S.getPublic(id), mineNow=mine().includes(c.id);
-  const kv=[["Kategori",C.CATS[c.cat]],["Meldt",fmt(c.created)]];
+  const kv=[["Mottaker",esc(c.tenantName)],["Kategori",esc(c.catName)],["Meldt",fmt(c.created)]];
   if(c.supplier) kv.push(["Utføres av",esc(c.supplier)]);
   if(c.prio) kv.push(["Prioritet",c.prio]);
   if(c.cost) kv.push(["Kostnad","kr "+c.cost.toLocaleString("no-NO")]);
-  $view.innerHTML=`<h2>${cic(c.cat)} ${C.CATS[c.cat]}</h2>
+  $view.innerHTML=`<h2>${cic(c.cat)} ${esc(c.catName)}</h2>
     <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>${c.id}</b>${badge(c.status)}</div>
     ${c.desc?`<p>${esc(c.desc)}</p>`:""}
     ${c.hasPhoto?`<img class="photo-prev" src="${S.photoUrl(c.id,"before")}" alt="Innsendt bilde">`:""}
     ${c.hasAfter?`<h3>Etter utbedring</h3><img class="photo-prev" src="${S.photoUrl(c.id,"after")}" alt="Bilde etter utbedring">`:""}
     <dl class="kv">${kv.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
     ${c.follows!==undefined?`<p class="muted iconline">${ic("users")} ${c.follows} andre følger denne saken</p>`:""}</div>
-    <div class="card"><h3>Status</h3><div class="timeline">${c.history.slice().reverse().map(h=>`<div class="ev ${h.kind==="public"?"public":""}">${h.kind==="public"?`<b class="iconline">${ic("message")} Melding fra kommunen</b>`:""}${esc(h.txt)}<small>${fmt(h.t)}</small></div>`).join("")}</div></div>
+    <div class="card"><h3>Status</h3><div class="timeline">${c.history.slice().reverse().map(h=>`<div class="ev ${h.kind==="public"?"public":""}">${h.kind==="public"?`<b class="iconline">${ic("message")} Melding fra ${esc(c.tenantName)}</b>`:""}${esc(h.txt)}<small>${fmt(h.t)}</small></div>`).join("")}</div></div>
     ${!mineNow?`<button class="btn" id="follow">${ic("bell")} Følg saken</button>`:""}`;
   document.getElementById("follow")?.addEventListener("click",async()=>{ await S.follow(c.id); addMine(c.id); toast("Du følger nå saken","bell"); VIEWS.sak(c.id); });
 };
 VIEWS.kart=async()=>{
-  const list=VIS.showOthers?await S.listPublic():(mine().length?await S.listPublic(mine()):[]);
-  $view.innerHTML=`<h2>${VIS.showOthers?"Meldte saker":"Mine saker på kart"}</h2>${VIS.exactLocation?"":'<p class="muted">Posisjoner vises omtrentlig.</p>'}<div id="bigmap"></div>`;
-  const m=makeMap("bigmap",CFG.center,14); if(!m) return;
+  const list=VIS.showOthers?await S.listPublic(T.id,null,T.code):(mine().length?(await S.listPublic(null,mine())).filter(c=>c.tenant===T.id):[]);
+  $view.innerHTML=`<h2>${VIS.showOthers?"Meldte saker":"Mine saker på kart"}</h2><p class="muted" style="margin-top:-6px">${esc(T.name)}${VIS.exactLocation?"":" · posisjoner vises omtrentlig"}</p><div id="bigmap"></div>`;
+  const m=makeMap("bigmap",T.center,14); if(!m) return;
   list.forEach(c=>{ L.marker([c.lat,c.lng],{icon:pinIcon(c)}).addTo(m)
-    .bindPopup(`<b>${C.CATS[c.cat]}</b><br>${esc(c.desc||"")}<br>${badge(c.status)}<br><a href="#">Åpne sak ${c.id}</a>`)
+    .bindPopup(`<b>${esc(c.catName)}</b><br>${esc(c.desc||"")}<br>${badge(c.status)}<br><a href="#">Åpne sak ${c.id}</a>`)
     .on("popupopen",e=>{ e.popup.getElement().querySelector("a").onclick=(ev)=>{ev.preventDefault();go("sak",c.id,true);} }); });
 };
 
@@ -303,9 +402,20 @@ if("serviceWorker" in navigator && location.protocol!=="file:") navigator.servic
 
 (async()=>{
   await S.init();
-  CFG=await S.publicSettings(); VIS=CFG.visibility;
-  document.getElementById("muni").textContent=CFG.municipality;
-  go("home");
+  KOMMUNER=await S.tenants().catch(()=>[]);
+  // Oppdater lagrede organisasjoner (navn, kategorier, synlighet). Fjern dem der koden ikke lenger gjelder.
+  JOINED=lget(JKEY,[]); const kept=[];
+  for(const o of JOINED){
+    try{ const info=await S.join(o.code); kept.push(Object.assign({},info,{code:C.normCode(o.code)})); }
+    catch(e){ if(e.status===404) toast(`Koden for ${o.name} er ikke lenger gyldig`,"info"); else kept.push(o); }
+  }
+  JOINED=kept; saveJoined();
+  const qs=new URLSearchParams(location.search);
+  setTenant(localStorage.getItem(TKEY));
+  // Direktelenker: ?kode=XXX-XXX-XXX (organisasjon) eller ?org=skien (kommune)
+  if(qs.get("kode")){ try{ await joinWithCode(qs.get("kode")); }catch(e){ toast("Ugyldig kode i lenken","info"); } history.replaceState(null,"",location.pathname); }
+  else if(qs.get("org")&&allTenants().some(t=>t.id===qs.get("org"))){ setTenant(qs.get("org")); history.replaceState(null,"",location.pathname); }
+  go(T?"home":"velg");
 })();
 </script>
 </body>

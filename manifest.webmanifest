@@ -1,7 +1,7 @@
 {
   "name": "MeldInn – meld fra om feil",
   "short_name": "MeldInn",
-  "description": "Meld inn ødelagte gatelys, hull i veien, søppel og mer. Ta bilde, bekreft sted, send.",
+  "description": "Meld fra om feil og mangler til kommunen, borettslaget eller bedriften.",
   "lang": "no",
   "start_url": "/",
   "scope": "/",

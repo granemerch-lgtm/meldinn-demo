@@ -1,7 +1,7 @@
 {
   "name": "meldinn-api",
-  "version": "1.0.0",
-  "description": "MeldInn API – Azure Functions (Node, v4)",
+  "version": "4.0.0",
+  "description": "MeldInn API – Azure Functions (Node, v4): organisasjoner, koder og brukere",
   "main": "src/functions/*.js",
   "dependencies": {
     "@azure/data-tables": "^13.3.0",
