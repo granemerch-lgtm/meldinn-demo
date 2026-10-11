@@ -183,7 +183,7 @@ VIEWS.home=async()=>{
     ${VIS.showOthers?`<div style="height:16px"></div><div class="card"><div class="row" style="text-align:center">
       <div><b style="font-size:26px;color:var(--petrol)">${open}</b><div class="muted">åpne saker</div></div>
       <div><b style="font-size:26px;color:var(--marine)">${solved}</b><div class="muted">nylig fikset</div></div>
-      <div><b style="font-size:26px;color:var(--orange)"${list.filter(c=>Date.now()-Date.parse(c.created)<7*864e5).length}
+      <div><b style="font-size:26px;color:var(--orange)">${list.filter(c=>Date.now()-Date.parse(c.created)<7*864e5).length}</b><div class="muted">Meldt siste 7 dager</div></div>
     </div></div>`:""}
     <p class="muted" style="text-align:center">${esc(CFG.municipality)}${S.mode==="local"?' · <span class="demo">Demomodus – lagres kun på denne enheten</span>':""}</p>`;
   document.getElementById("startBtn").onclick=()=>{ draft={cat:null,photo:null,lat:null,lng:null,desc:"",contact:""}; go("m1",null,true); };
